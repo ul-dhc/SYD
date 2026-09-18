@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="lv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f0e7" />
+    <meta
+      name="description"
+      content="Praktiski ieteikumi humanitāro zinātņu datu sagatavošanai darbam ar SYD."
+    />
+    <title>Ieteikumi datu sagatavošanai – SYD</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="./src/concept.css" />
+    <link rel="stylesheet" href="./src/data-preparation.css" />
+  </head>
+  <body class="concept-page">
+    <a class="skip-link" href="#data-preparation">Pāriet uz ieteikumiem</a>
+
+    <header class="site-header">
+      <a class="brand" href="./index.html" aria-label="SYD sākums">
+        <img class="brand-mark" src="./assets/brand-mark.svg" alt="" width="24" height="28" />
+        <span>
+          <strong>SYD</strong>
+          <small>See Your Data</small>
+        </span>
+      </a>
+      <nav aria-label="Galvenā navigācija">
+        <a href="./index.html#workspace">Izpētīt datus</a>
+        <a href="./data-preparation.html" aria-current="page">Ieteikumi datu sagatavošanai</a>
+        <a href="./index.html#principles">Kā tas darbojas</a>
+        <a href="./concept.html">Koncepcija</a>
+      </nav>
+      <span class="prototype-label">Prototips 0.1</span>
+    </header>
+
+    <main class="concept-main preparation-main" id="data-preparation">
+      <section class="preparation-hero" aria-labelledby="preparation-page-title">
+        <div>
+          <p class="eyebrow">Pirms datu atvēršanas</p>
+          <h1 id="preparation-page-title">Ieteikumi datu sagatavošanai</h1>
+          <p class="concept-lead">
+            Sakārtota tabula palīdz SYD pareizi atpazīt datu struktūru un piedāvāt
+            piemērotas vizualizācijas. Oriģinālo failu saglabājiet atsevišķi.
+          </p>
+        </div>
+        <aside class="preparation-summary">
+          <i data-lucide="check-check" aria-hidden="true"></i>
+          <p><strong>Galvenais princips</strong> – viena rinda apzīmē vienu ierakstu, bet viena kolonna – vienu pazīmi.</p>
+        </aside>
+      </section>
+
+      <section class="preparation-checklist" aria-labelledby="checklist-title">
+        <div class="concept-section-heading">
+          <div>
+            <p class="eyebrow">Pārbaudes saraksts</p>
+            <h2 id="checklist-title">Ko sakārtot tabulā?</h2>
+          </div>
+          <p class="section-intro">Šie ieteikumi attiecas uz CSV, TSV un XLSX failiem.</p>
+        </div>
+
+        <div class="guidance-grid">
+          <article>
+            <i data-lucide="table-properties" aria-hidden="true"></i>
+            <span>01</span>
+            <h3>Tabulas uzbūve</h3>
+            <p>Pirmajā rindā ievietojiet kolonnu nosaukumus. Neizmantojiet apvienotas šūnas, tukšas virsrakstu rindas vai tabulas kopsavilkumus datu vidū.</p>
+          </article>
+          <article>
+            <i data-lucide="tag" aria-hidden="true"></i>
+            <span>02</span>
+            <h3>Kolonnu nosaukumi</h3>
+            <p>Izvēlieties īsus un nepārprotamus nosaukumus, piemēram, “Persona”, “Vieta”, “Datums” un “Avots”. Katram nosaukumam jābūt unikālam.</p>
+          </article>
+          <article>
+            <i data-lucide="calendar-days" aria-hidden="true"></i>
+            <span>03</span>
+            <h3>Datumi un gadi</h3>
+            <p>Excel failā izmantojiet datuma tipa šūnas. Teksta datumus pierakstiet vienotā formātā, vēlams GGGG-MM-DD. Ja zināms tikai gads, glabājiet to atsevišķā skaitliskā kolonnā.</p>
+          </article>
+          <article>
+            <i data-lucide="circle-help" aria-hidden="true"></i>
+            <span>04</span>
+            <h3>Trūkstošās un neskaidrās vērtības</h3>
+            <p>Trūkstošu vērtību atstājiet tukšu vai visā tabulā izmantojiet vienu apzīmējumu. Nezināmu, aptuvenu un apšaubāmu informāciju nenoapaļojiet līdz šķietamai precizitātei.</p>
+          </article>
+          <article>
+            <i data-lucide="split" aria-hidden="true"></i>
+            <span>05</span>
+            <h3>Vairākas vērtības</h3>
+            <p>Ja vienā šūnā ir vairākas personas, vietas vai kategorijas, izmantojiet vienu konsekventu atdalītāju. Tīklu analīzei precīzāks risinājums ir katru saikni ierakstīt atsevišķā rindā.</p>
+          </article>
+          <article>
+            <i data-lucide="layers-3" aria-hidden="true"></i>
+            <span>06</span>
+            <h3>Excel darblapas</h3>
+            <p>Darblapas drīkst apvienot, ja tajās ir vienādas kolonnas un katra apzīmē salīdzināmu datu daļu. Ja struktūra vai nozīme atšķiras, analizējiet tās atsevišķi.</p>
+          </article>
+          <article>
+            <i data-lucide="fingerprint" aria-hidden="true"></i>
+            <span>07</span>
+            <h3>Identifikatori un nosaukumu varianti</h3>
+            <p>Ja iespējams, katram ierakstam piešķiriet unikālu ID. Oriģinālo personas vai vietas nosaukumu saglabājiet, bet standartizēto formu ievietojiet atsevišķā kolonnā.</p>
+          </article>
+          <article>
+            <i data-lucide="copy-check" aria-hidden="true"></i>
+            <span>08</span>
+            <h3>Dublikāti un pārbaude</h3>
+            <p>Pārbaudiet pilnīgi vienādas rindas, nejaušas atstarpes un rakstības variantus. Dzēsiet dublikātus tikai tad, ja esat pārliecināts, ka tie nav atsevišķi avota ieraksti.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="preparation-caution" aria-labelledby="caution-title">
+        <div>
+          <p class="eyebrow">Humanitāro zinātņu dati</p>
+          <h2 id="caution-title">Neskaidrība nav obligāti kļūda</h2>
+        </div>
+        <div class="concept-prose">
+          <p>
+            Vēsturiski nosaukumu varianti, aptuveni datumi un nepilnīga informācija
+            var būt pētnieciski nozīmīgi. Saglabājiet sākotnējo vērtību un, ja
+            nepieciešams, pievienojiet atsevišķu kolonnu standartizētajai vērtībai
+            vai piezīmei par nenoteiktību.
+          </p>
+          <p>
+            SYD pēc faila atvēršanas sniedz arī konkrētajai datu kopai pielāgotus
+            ieteikumus. Šī pārbaude ir automātiska, tāpēc iespējamas arī kļūdas.
+          </p>
+        </div>
+      </section>
+
+      <section class="preparation-action">
+        <div>
+          <p class="eyebrow">Vai tabula ir gatava?</p>
+          <h2>Atveriet datus un pārbaudiet SYD ieteikumus</h2>
+        </div>
+        <a class="button button-dark" href="./index.html#workspace">
+          Izpētīt datus
+          <i data-lucide="arrow-right" aria-hidden="true"></i>
+        </a>
+      </section>
+    </main>
+
+    <footer>
+      <p><strong>SYD – See Your Data</strong></p>
+      <p>LU Digitālo humanitāro zinātņu centrs</p>
+    </footer>
+
+    <script src="https://unpkg.com/lucide@0.503.0/dist/umd/lucide.min.js"></script>
+    <script>window.lucide?.createIcons();</script>
+  </body>
+</html>

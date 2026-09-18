@@ -100,7 +100,7 @@ a {
 
 nav {
   display: flex;
-  gap: 28px;
+  gap: clamp(16px, 2vw, 28px);
   margin-left: auto;
 }
 
@@ -420,8 +420,19 @@ footer p {
 }
 
 @media (max-width: 860px) {
+  .site-header {
+    flex-wrap: wrap;
+  }
+
   .site-header nav {
-    display: none;
+    order: 3;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 22px;
+    margin-left: 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
   }
 
   .prototype-label {
