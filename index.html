@@ -195,10 +195,28 @@
           </section>
 
           <section class="analysis-section visualisation-section" id="visualisation-section" aria-labelledby="visualisation-title" hidden>
+            <header class="visual-focus-header">
+              <a class="focus-brand" href="./index.html" aria-label="SYD sākums">
+                <img src="./assets/brand-mark.svg" alt="" width="24" height="28" />
+                <span><strong>SYD</strong><small>See Your Data</small></span>
+              </a>
+              <div class="focus-identity">
+                <small id="focus-dataset-name">Datu kopa</small>
+                <strong id="focus-visualisation-name">Vizualizācija</strong>
+              </div>
+              <button id="close-visualisation-focus" type="button" aria-label="Atgriezties pie datiem" title="Atgriezties pie datiem">
+                <i data-lucide="arrow-left" aria-hidden="true"></i>
+                <span>Atgriezties pie datiem</span>
+              </button>
+            </header>
             <div class="section-heading">
               <div><span class="section-number">05</span><div><p class="eyebrow">Izvēlētā vizualizācija</p><h3 id="visualisation-title">Kategoriju biežuma vizualizācija</h3></div></div>
               <p id="method-note">Piemērots, lai salīdzinātu vienas kolonnas vērtību biežumu.</p>
             </div>
+            <button class="button button-dark open-visualisation-focus" id="open-visualisation-focus" type="button">
+              Atvērt vizualizāciju
+              <i data-lucide="maximize-2" aria-hidden="true"></i>
+            </button>
             <div class="explorer-shell">
               <details class="explorer-filter-panel" open>
                 <summary>

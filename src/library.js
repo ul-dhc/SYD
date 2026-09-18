@@ -1,6 +1,7 @@
 export const SYD_LIBRARY = [
   {
     id: "data-overview",
+    hash: "datu-parskats",
     title: "Datu pārskats",
     description: "Apvieno vairākas savstarpēji saistītas vizualizācijas vienā pārskatā.",
     limitation: "Pārskats izceļ biežākās vērtības, tāpēc retākie ieraksti var nebūt uzreiz redzami.",
@@ -12,6 +13,7 @@ export const SYD_LIBRARY = [
   },
   {
     id: "category-frequency",
+    hash: "kategoriju-biezums",
     title: "Kategoriju biežums",
     description: "Parāda, kuras vērtības izvēlētajā kolonnā sastopamas biežāk.",
     limitation: "Biežums neparāda parādības nozīmīgumu.",
@@ -23,6 +25,7 @@ export const SYD_LIBRARY = [
   },
   {
     id: "place-frequency",
+    hash: "vietu-sadalijums",
     title: "Vietu sadalījums",
     description: "Salīdzina datos minētās vietas bez automātiskas to piesaistes kartei.",
     limitation: "Vienas vietas dažādi nosaukumi netiek automātiski apvienoti.",
@@ -34,6 +37,7 @@ export const SYD_LIBRARY = [
   },
   {
     id: "time-distribution",
+    hash: "laika-sadalijums",
     title: "Laika sadalījums",
     description: "Parāda ierakstu koncentrāciju un pārtraukumus gados vai datumos.",
     limitation: "Sadalījumu var ietekmēt avotu saglabāšanās un atlase.",
@@ -45,6 +49,7 @@ export const SYD_LIBRARY = [
   },
   {
     id: "category-comparison",
+    hash: "pazimju-saistiba",
     title: "Divu kategoriju salīdzinājums",
     description: "Parāda, kuras divu kolonnu vērtību kombinācijas datos atkārtojas.",
     limitation: "Vērtību biežums neapliecina cēloņsakarību.",
@@ -56,6 +61,7 @@ export const SYD_LIBRARY = [
   },
   {
     id: "bipartite-network",
+    hash: "saiknu-tikls",
     title: "Divdaļīgs saikņu tīkls",
     description: "Savieno divu kolonnu vērtības, kas parādās vienā datu ierakstā.",
     limitation: "Kopīga parādīšanās vienā rindā vēl nepierāda vēsturisku vai sociālu saikni.",
@@ -67,6 +73,7 @@ export const SYD_LIBRARY = [
   },
   {
     id: "record-browser",
+    hash: "ieraksti",
     title: "Ierakstu pārlūks",
     description: "Ļauj pārbaudīt avota ierakstus un salīdzināt to vērtības tabulā.",
     limitation: "Šajā prototipā parādīti pirmie 50 ieraksti.",

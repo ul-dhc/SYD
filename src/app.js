@@ -6,6 +6,7 @@ const MAX_ROWS = 10_000;
 const MAX_COLUMNS = 100;
 const ALL_XLSX_SHEETS = "__all__";
 const CHART_PREFERENCES_KEY = "syd-chart-preferences";
+const DEFAULT_DOCUMENT_TITLE = document.title;
 const COLUMN_TYPES = [
   ["teksts", "Teksts"],
   ["kategorija", "Kategorija"],
@@ -37,6 +38,7 @@ const state = {
   chartPalette: readChartPreferences().palette || "archive",
   chartStyle: readChartPreferences().style || "standard",
   chartAnimation: readChartPreferences().animation || "none",
+  focusReturnScroll: 0,
 };
 
 const elements = {
@@ -76,6 +78,10 @@ const elements = {
   chartStyle: document.querySelector("#chart-style-select"),
   chartAnimation: document.querySelector("#chart-animation-select"),
   chartPaletteButtons: [...document.querySelectorAll("[data-chart-palette]")],
+  openVisualisationFocus: document.querySelector("#open-visualisation-focus"),
+  closeVisualisationFocus: document.querySelector("#close-visualisation-focus"),
+  focusDatasetName: document.querySelector("#focus-dataset-name"),
+  focusVisualisationName: document.querySelector("#focus-visualisation-name"),
   visualOutput: document.querySelector("#visual-output"),
   interpretation: document.querySelector("#interpretation p"),
   stepperItems: [...document.querySelectorAll(".stepper li")],
@@ -88,6 +94,7 @@ function syncFilterPanelViewport(event = compactFilterMedia) {
 syncFilterPanelViewport();
 compactFilterMedia.addEventListener?.("change", syncFilterPanelViewport);
 applyChartPreferences();
+window.addEventListener("hashchange", syncVisualisationFocus);
 
 elements.demoButton?.addEventListener("click", loadDemo);
 elements.fileInput?.addEventListener("change", loadFile);
@@ -136,6 +143,8 @@ elements.chartPaletteButtons.forEach((button) => button.addEventListener("click"
   saveChartPreferences();
   applyChartPreferences();
 }));
+elements.openVisualisationFocus?.addEventListener("click", openVisualisationFocus);
+elements.closeVisualisationFocus?.addEventListener("click", closeVisualisationFocus);
 elements.visualOutput?.addEventListener("click", (event) => {
   const target = event.target.closest("[data-filter-field][data-filter-value]");
   if (!target) return;
@@ -646,12 +655,14 @@ function configureVisualisation() {
   const config = state.recommendations.find((module) => module.id === state.moduleId);
   if (!config) {
     elements.visualisationSection.hidden = true;
+    syncVisualisationFocus();
     return;
   }
   elements.visualisationSection.hidden = false;
   elements.visualTitle.textContent = config.title;
   elements.methodNote.textContent = config.note;
   elements.interpretation.textContent = config.interpretation;
+  updateVisualisationIdentity(config);
   elements.chartSettings.hidden = ["network", "records"].includes(config.renderer);
   elements.fieldControl.hidden = ["records", "overview"].includes(config.renderer);
   elements.secondFieldControl.hidden = !["comparison", "network"].includes(config.renderer);
@@ -663,6 +674,49 @@ function configureVisualisation() {
   }
   setActiveStep(2);
   renderVisualisation();
+  syncVisualisationFocus();
+}
+
+function visualisationHashId(config) {
+  return `viz-${config.hash || config.id}`;
+}
+
+function currentVisualisationConfig() {
+  return state.recommendations.find((module) => module.id === state.moduleId);
+}
+
+function updateVisualisationIdentity(config) {
+  elements.explorerShell.id = visualisationHashId(config);
+  elements.focusDatasetName.textContent = state.name || "Datu kopa";
+  elements.focusVisualisationName.textContent = config.title;
+}
+
+function openVisualisationFocus() {
+  const config = currentVisualisationConfig();
+  if (!config) return;
+  state.focusReturnScroll = window.scrollY;
+  const hash = `#${visualisationHashId(config)}`;
+  if (window.location.hash === hash) syncVisualisationFocus();
+  else window.location.hash = hash;
+}
+
+function closeVisualisationFocus() {
+  const returnScroll = state.focusReturnScroll;
+  history.pushState(null, "", "#workspace");
+  syncVisualisationFocus();
+  requestAnimationFrame(() => window.scrollTo({ top: returnScroll, behavior: "auto" }));
+}
+
+function syncVisualisationFocus() {
+  const config = currentVisualisationConfig();
+  const activeHash = config ? `#${visualisationHashId(config)}` : "";
+  const shouldFocus = Boolean(config && state.rows.length && window.location.hash === activeHash);
+  document.body.classList.toggle("visualisation-focus", shouldFocus);
+  document.title = shouldFocus ? `${config.title} · ${state.name} · SYD` : DEFAULT_DOCUMENT_TITLE;
+  if (shouldFocus) {
+    updateVisualisationIdentity(config);
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
+  }
 }
 
 function renderVisualisation() {
@@ -839,6 +893,7 @@ function renderRecords() {
 }
 
 function resetWorkspace() {
+  history.replaceState(null, "", "#workspace");
   Object.assign(state, { rows: [], columns: [], profiles: [], name: "", question: "categories", workbook: null, workbookName: "", sheetName: "", structureConfirmed: false, moduleId: "", recommendations: [], searchQuery: "", filters: new Map() });
   if (elements.searchFilter) elements.searchFilter.value = "";
   if (elements.generatedFilters) elements.generatedFilters.innerHTML = "";
@@ -850,6 +905,7 @@ function resetWorkspace() {
   elements.sourceGrid.hidden = false;
   setStatus("");
   setActiveStep(0);
+  syncVisualisationFocus();
   document.querySelector("#workspace-title").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
