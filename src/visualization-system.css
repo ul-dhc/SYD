@@ -147,7 +147,7 @@
 .overview-columns button > strong { color: var(--viz-ink); font-size: .68rem; }
 .overview-columns button > i { position: relative; display: block; width: 100%; height: 100%; background: color-mix(in srgb, var(--viz-ink) 6%, transparent); }
 .overview-columns button > i b { position: absolute; inset: auto 0 0; height: var(--bar-size); background: var(--chart-color); transform-origin: bottom; animation: grow-column 500ms ease both; }
-.overview-columns button > span { align-self: start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; writing-mode: vertical-rl; transform: rotate(180deg); justify-self: center; max-height: 34px; }
+.overview-columns .artifact-column > span { display: -webkit-box; width: 100%; max-height: 38px; overflow: hidden; align-self: start; justify-self: stretch; font-size: .5625rem; line-height: 1.25; text-align: center; white-space: normal; writing-mode: horizontal-tb; transform: none; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .chart-empty { color: var(--viz-muted); font-size: .78rem; }
 .overview-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 0 0; border-top: 1px solid var(--viz-line); color: var(--viz-muted); font-size: .68rem; }
 .overview-footer strong { color: var(--viz-ink); }
