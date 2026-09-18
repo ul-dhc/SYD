@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# Dependencies and build output
+node_modules/
+dist/
+build/
+.vite/
+.next/
+coverage/
+
+# Local development state
+.wrangler/
+.vercel/
+*.log
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+
+# Editor-local files
+.idea/
+.vscode/
+*.swp
