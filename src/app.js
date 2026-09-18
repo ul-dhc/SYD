@@ -365,11 +365,11 @@ function matchLibraryModule(module, profiles) {
       .filter((profile) => module.fieldTypes.includes(profile.type))
       .sort((first, second) => module.fieldTypes.indexOf(first.type) - module.fieldTypes.indexOf(second.type))
     : profiles;
-  if (module.renderer === "comparison" && fields.length < 2) return null;
+  if (["comparison", "network"].includes(module.renderer) && fields.length < 2) return null;
   if (!fields.length) return null;
   const fit = module.renderer === "records"
     ? profiles.length === 1 ? "1 iekļauta kolonna" : `${profiles.length} iekļautas kolonnas`
-    : module.renderer === "comparison"
+    : ["comparison", "network"].includes(module.renderer)
       ? `${fields.length} salīdzināmas kolonnas`
       : fields.length === 1 ? "1 piemērota kolonna" : `${fields.length} piemērotas kolonnas`;
   return { ...module, fields, fit, score: module.scores[state.question] || 0 };
@@ -390,11 +390,11 @@ function configureVisualisation() {
   elements.methodNote.textContent = config.note;
   elements.interpretation.textContent = config.interpretation;
   elements.fieldControl.hidden = config.renderer === "records";
-  elements.secondFieldControl.hidden = config.renderer !== "comparison";
-  elements.limitControl.hidden = ["records", "comparison"].includes(config.renderer);
+  elements.secondFieldControl.hidden = !["comparison", "network"].includes(config.renderer);
+  elements.limitControl.hidden = ["records", "comparison", "network"].includes(config.renderer);
   elements.fieldSelect.innerHTML = config.fields.map((profile) => `<option value="${escapeHtml(profile.name)}">${escapeHtml(profile.name)} · ${profile.type}</option>`).join("");
   elements.secondFieldSelect.innerHTML = elements.fieldSelect.innerHTML;
-  if (config.renderer === "comparison" && config.fields.length > 1) {
+  if (["comparison", "network"].includes(config.renderer) && config.fields.length > 1) {
     elements.secondFieldSelect.value = config.fields[1].name;
   }
   setActiveStep(2);
@@ -406,6 +406,7 @@ function renderVisualisation() {
   if (!config) return;
   if (config.renderer === "records") return renderRecords();
   if (config.renderer === "comparison") return renderComparison();
+  if (config.renderer === "network") return renderNetwork();
   const field = elements.fieldSelect.value;
   if (!field) {
     elements.visualOutput.innerHTML = `<div class="empty-state"><p>Šim skatam vajadzīgā tipa kolonna nav atrasta.<br>Izvēlieties citu pētniecisko jautājumu.</p></div>`;
@@ -430,12 +431,69 @@ function splitValues(value) {
 }
 
 function renderComparison() {
-  const firstField = elements.fieldSelect.value;
-  const secondField = elements.secondFieldSelect.value;
-  if (!firstField || !secondField || firstField === secondField) {
+  const pairData = buildPairData();
+  if (!pairData) {
     elements.visualOutput.innerHTML = `<div class="empty-state"><p>Izvēlieties divas atšķirīgas kolonnas.</p></div>`;
     return;
   }
+  const { firstField, secondField, pairs, firstCounts, secondCounts } = pairData;
+  const firstValues = [...firstCounts].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([value]) => value);
+  const secondValues = [...secondCounts].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([value]) => value);
+  const max = Math.max(...firstValues.flatMap((firstValue) => secondValues.map((secondValue) => pairs.get(`${firstValue}\u0000${secondValue}`) || 0)), 1);
+  elements.visualOutput.innerHTML = `<div class="comparison-wrap"><table class="comparison-table"><caption class="visually-hidden">${escapeHtml(firstField)} un ${escapeHtml(secondField)} vērtību kombināciju biežums</caption><thead><tr><th scope="col">${escapeHtml(firstField)} / ${escapeHtml(secondField)}</th>${secondValues.map((value) => `<th scope="col">${escapeHtml(value)}</th>`).join("")}</tr></thead><tbody>${firstValues.map((firstValue) => `<tr><th scope="row">${escapeHtml(firstValue)}</th>${secondValues.map((secondValue) => { const count = pairs.get(`${firstValue}\u0000${secondValue}`) || 0; return `<td style="--intensity:${Math.round((count / max) * 70)}" title="${escapeHtml(`${firstValue} un ${secondValue}: ${count}`)}">${count || "–"}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+
+function renderNetwork() {
+  const pairData = buildPairData();
+  if (!pairData) {
+    elements.visualOutput.innerHTML = `<div class="empty-state"><p>Izvēlieties divas atšķirīgas kolonnas.</p></div>`;
+    return;
+  }
+  const { firstField, secondField, pairs, firstCounts, secondCounts } = pairData;
+  const firstEntries = [...firstCounts].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const secondEntries = [...secondCounts].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const firstValues = new Set(firstEntries.map(([value]) => value));
+  const secondValues = new Set(secondEntries.map(([value]) => value));
+  const links = [...pairs]
+    .map(([key, count]) => {
+      const [firstValue, secondValue] = key.split("\u0000");
+      return { firstValue, secondValue, count };
+    })
+    .filter((link) => firstValues.has(link.firstValue) && secondValues.has(link.secondValue));
+  const height = Math.max(360, Math.max(firstEntries.length, secondEntries.length) * 54 + 76);
+  const yPosition = (index, total) => total === 1 ? height / 2 : 58 + (index * (height - 104)) / (total - 1);
+  const firstPositions = new Map(firstEntries.map(([value], index) => [value, yPosition(index, firstEntries.length)]));
+  const secondPositions = new Map(secondEntries.map(([value], index) => [value, yPosition(index, secondEntries.length)]));
+  const maxLink = Math.max(...links.map((link) => link.count), 1);
+  const maxNode = Math.max(...firstEntries.map(([, count]) => count), ...secondEntries.map(([, count]) => count), 1);
+  const edges = links.map((link) => {
+    const width = 1 + (link.count / maxLink) * 5;
+    const opacity = 0.25 + (link.count / maxLink) * 0.55;
+    const sharedRecords = link.count === 1 ? "1 kopīgs ieraksts" : `${link.count} kopīgi ieraksti`;
+    return `<line class="network-edge" x1="248" y1="${firstPositions.get(link.firstValue)}" x2="552" y2="${secondPositions.get(link.secondValue)}" stroke-width="${width}" opacity="${opacity}"><title>${escapeHtml(`${link.firstValue} un ${link.secondValue}: ${sharedRecords}`)}</title></line>`;
+  }).join("");
+  const firstNodes = firstEntries.map(([value, count]) => networkNodeMarkup(value, count, 240, firstPositions.get(value), "left", maxNode)).join("");
+  const secondNodes = secondEntries.map(([value, count]) => networkNodeMarkup(value, count, 560, secondPositions.get(value), "right", maxNode)).join("");
+  elements.visualOutput.innerHTML = `<div class="network-wrap"><svg class="network-svg" viewBox="0 0 800 ${height}" role="img" aria-label="Divdaļīgs tīkls starp kolonnām ${escapeHtml(firstField)} un ${escapeHtml(secondField)}"><text class="network-heading" x="240" y="22" text-anchor="end">${escapeHtml(firstField)}</text><text class="network-heading" x="560" y="22">${escapeHtml(secondField)}</text>${edges}${firstNodes}${secondNodes}</svg></div>`;
+}
+
+function networkNodeMarkup(value, count, x, y, side, maxNode) {
+  const radius = 6 + (count / maxNode) * 7;
+  const labelX = side === "left" ? x - radius - 8 : x + radius + 8;
+  const anchor = side === "left" ? "end" : "start";
+  const className = side === "left" ? "network-node-left" : "network-node-right";
+  const records = count === 1 ? "1 ieraksts" : `${count} ieraksti`;
+  return `<g><circle class="${className}" cx="${x}" cy="${y}" r="${radius}"><title>${escapeHtml(`${value}: ${records}`)}</title></circle><text class="network-label" x="${labelX}" y="${y + 4}" text-anchor="${anchor}">${escapeHtml(shortenLabel(value))}</text></g>`;
+}
+
+function shortenLabel(value) {
+  return value.length > 28 ? `${value.slice(0, 27)}…` : value;
+}
+
+function buildPairData() {
+  const firstField = elements.fieldSelect.value;
+  const secondField = elements.secondFieldSelect.value;
+  if (!firstField || !secondField || firstField === secondField) return null;
   const firstProfile = state.profiles.find((profile) => profile.name === firstField);
   const secondProfile = state.profiles.find((profile) => profile.name === secondField);
   const pairs = new Map();
@@ -456,11 +514,7 @@ function renderComparison() {
     }
     for (const secondValue of secondValues) secondCounts.set(secondValue, (secondCounts.get(secondValue) || 0) + 1);
   }
-
-  const firstValues = [...firstCounts].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([value]) => value);
-  const secondValues = [...secondCounts].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([value]) => value);
-  const max = Math.max(...firstValues.flatMap((firstValue) => secondValues.map((secondValue) => pairs.get(`${firstValue}\u0000${secondValue}`) || 0)), 1);
-  elements.visualOutput.innerHTML = `<div class="comparison-wrap"><table class="comparison-table"><caption class="visually-hidden">${escapeHtml(firstField)} un ${escapeHtml(secondField)} vērtību kombināciju biežums</caption><thead><tr><th scope="col">${escapeHtml(firstField)} / ${escapeHtml(secondField)}</th>${secondValues.map((value) => `<th scope="col">${escapeHtml(value)}</th>`).join("")}</tr></thead><tbody>${firstValues.map((firstValue) => `<tr><th scope="row">${escapeHtml(firstValue)}</th>${secondValues.map((secondValue) => { const count = pairs.get(`${firstValue}\u0000${secondValue}`) || 0; return `<td style="--intensity:${Math.round((count / max) * 70)}" title="${escapeHtml(`${firstValue} un ${secondValue}: ${count}`)}">${count || "–"}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
+  return { firstField, secondField, pairs, firstCounts, secondCounts };
 }
 
 function compareTimeValues(first, second) {

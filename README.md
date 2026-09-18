@@ -29,7 +29,7 @@ The first browser-based prototype is implemented. It provides:
 - automatic column type, missing-value, and uniqueness summaries;
 - guided selection between category, time, and record-exploration views;
 - up to three data-aware SYD Library recommendations with explicit limitations;
-- category-frequency, place-frequency, time-distribution, category-comparison, and record-browser modules;
+- category-frequency, place-frequency, time-distribution, category-comparison, bipartite-network, and record-browser modules;
 - a synthetic demonstration dataset for trying the workflow.
 
 Imported research data stays in the browser and is not uploaded to SYD or sent to an LLM. The existing NSRD/Seque visualisation remains a separate project and will later become a SYD demonstration configuration.

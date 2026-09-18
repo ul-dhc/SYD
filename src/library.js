@@ -8,7 +8,7 @@ export const SYD_LIBRARY = [
     interpretation: "Biežums parāda ierakstu skaitu, nevis parādības nozīmīgumu. Tukšās vērtības tiek parādītas atsevišķi.",
     renderer: "frequency",
     fieldTypes: ["kategorija", "vairākas vērtības", "persona", "teksts"],
-    scores: { categories: 100, time: 35, records: 55 },
+    scores: { categories: 100, time: 35, relationships: 45, records: 55 },
   },
   {
     id: "place-frequency",
@@ -19,7 +19,7 @@ export const SYD_LIBRARY = [
     interpretation: "Vietas pieminējumu skaits neparāda to ģeogrāfisko nozīmīgumu. Vienas vietas dažādi nosaukumi var būt saskaitīti atsevišķi.",
     renderer: "frequency",
     fieldTypes: ["vieta"],
-    scores: { categories: 95, time: 40, records: 50 },
+    scores: { categories: 95, time: 40, relationships: 50, records: 50 },
   },
   {
     id: "time-distribution",
@@ -30,7 +30,7 @@ export const SYD_LIBRARY = [
     interpretation: "Ierakstu skaits konkrētā periodā var atspoguļot gan vēsturisku aktivitāti, gan avotu saglabāšanos un datu vākšanas izvēles.",
     renderer: "time",
     fieldTypes: ["gads", "datums", "skaitlis"],
-    scores: { categories: 45, time: 100, records: 40 },
+    scores: { categories: 45, time: 100, relationships: 30, records: 40 },
   },
   {
     id: "category-comparison",
@@ -41,7 +41,18 @@ export const SYD_LIBRARY = [
     interpretation: "Vērtību kombināciju biežums neapliecina cēloņsakarību. Retas kombinācijas var būt saistītas arī ar nepilnīgiem datiem.",
     renderer: "comparison",
     fieldTypes: ["kategorija", "vieta", "persona", "vairākas vērtības", "teksts"],
-    scores: { categories: 90, time: 45, records: 45 },
+    scores: { categories: 90, time: 45, relationships: 85, records: 45 },
+  },
+  {
+    id: "bipartite-network",
+    title: "Divdaļīgs saikņu tīkls",
+    description: "Savieno divu kolonnu vērtības, kas parādās vienā datu ierakstā.",
+    limitation: "Kopīga parādīšanās vienā rindā vēl nepierāda vēsturisku vai sociālu saikni.",
+    note: "Piemērots divu tipu objektu savstarpējo parādīšanos izpētei.",
+    interpretation: "Līnija nozīmē tikai abu vērtību parādīšanos vienā tabulas rindā. Tā pati par sevi nepierāda tiešu, vēsturisku vai sociālu saikni.",
+    renderer: "network",
+    fieldTypes: ["persona", "vieta", "kategorija", "vairākas vērtības", "teksts"],
+    scores: { categories: 92, time: 40, relationships: 100, records: 45 },
   },
   {
     id: "record-browser",
@@ -52,6 +63,6 @@ export const SYD_LIBRARY = [
     interpretation: "Tabulas priekšskatījums nemaina avota vērtības. Šajā prototipā tiek parādīti pirmie 50 ieraksti.",
     renderer: "records",
     fieldTypes: [],
-    scores: { categories: 50, time: 55, records: 100 },
+    scores: { categories: 50, time: 55, relationships: 55, records: 100 },
   },
 ];
