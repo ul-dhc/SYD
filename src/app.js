@@ -176,7 +176,7 @@ function renderOverview() {
   const totalCells = state.rows.length * state.columns.length;
   const timeFields = state.profiles.filter((profile) => ["gads", "datums"].includes(profile.type)).length;
   elements.metrics.innerHTML = [metricMarkup(state.rows.length, "ieraksti"), metricMarkup(state.columns.length, "kolonnas"), metricMarkup(totalCells ? `${Math.round((missing / totalCells) * 100)}%` : "0%", "tukšu šūnu"), metricMarkup(timeFields, "laika lauki")].join("");
-  elements.columnProfile.innerHTML = `<div class="profile-row" aria-hidden="true"><span>Kolonna</span><span>SYD tips</span><span>Tukšs / unikāls</span><span>Piemēri</span></div>${state.profiles.map((profile) => `<div class="profile-row"><strong>${escapeHtml(profile.name)}</strong><span class="type-pill">${escapeHtml(profile.type)}</span><span>${profile.missing} / ${profile.unique}</span><span class="profile-sample" title="${escapeHtml(profile.samples.join(", "))}">${escapeHtml(profile.samples.join(" · ") || "—")}</span></div>`).join("")}`;
+  elements.columnProfile.innerHTML = `<div class="profile-row" aria-hidden="true"><span>Kolonna</span><span>SYD tips</span><span>Tukšs / unikāls</span><span>Piemēri</span></div>${state.profiles.map((profile) => `<div class="profile-row"><strong>${escapeHtml(profile.name)}</strong><span class="type-pill">${escapeHtml(profile.type)}</span><span>${profile.missing} / ${profile.unique}</span><span class="profile-sample" title="${escapeHtml(profile.samples.join(", "))}">${escapeHtml(profile.samples.join(" · ") || "–")}</span></div>`).join("")}`;
 }
 
 function metricMarkup(value, label) {
@@ -234,7 +234,7 @@ function compareTimeValues(first, second) {
 }
 
 function renderRecords() {
-  elements.visualOutput.innerHTML = `<div class="records-wrap"><table class="records-table"><thead><tr>${state.columns.map((column) => `<th scope="col">${escapeHtml(column)}</th>`).join("")}</tr></thead><tbody>${state.rows.slice(0, 50).map((row) => `<tr>${state.columns.map((column) => `<td>${escapeHtml(row[column] || "—")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  elements.visualOutput.innerHTML = `<div class="records-wrap"><table class="records-table"><thead><tr>${state.columns.map((column) => `<th scope="col">${escapeHtml(column)}</th>`).join("")}</tr></thead><tbody>${state.rows.slice(0, 50).map((row) => `<tr>${state.columns.map((column) => `<td>${escapeHtml(row[column] || "–")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 
 function resetWorkspace() {

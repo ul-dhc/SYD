@@ -6,9 +6,9 @@ SYD is a planned data exploration and visualisation environment for humanities r
 
 The project combines three parts:
 
-- **SYD Guide** — a methodological conversation guide that helps formulate a research question and recommends suitable methods;
-- **SYD Explorer** — a browser-based workspace for preparing, exploring, and visualising data;
-- **SYD Library** — a curated library of humanities-oriented methods and visualisation modules.
+- **SYD Guide** – a methodological conversation guide that helps formulate a research question and recommends suitable methods;
+- **SYD Explorer** – a browser-based workspace for preparing, exploring, and visualising data;
+- **SYD Library** – a curated library of humanities-oriented methods and visualisation modules.
 
 ## Core principles
 

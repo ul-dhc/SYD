@@ -1,4 +1,4 @@
-# SYD — See Your Data
+# SYD – See Your Data
 
 ## Produkta koncepcija
 
@@ -11,7 +11,7 @@
 
 ## 1. Kopsavilkums
 
-SYD — See Your Data ir humanitāro zinātņu pētniekiem paredzēta vadīta datu izpētes un vizualizācijas vide. Tā palīdz cilvēkiem bez programmēšanas un padziļinātām datu analīzes prasmēm saprast savu datu struktūru, sagatavot datus izpētei, izvēlēties metodoloģiski piemērotas vizualizācijas un publicēt interaktīvus rezultātus.
+SYD – See Your Data ir humanitāro zinātņu pētniekiem paredzēta vadīta datu izpētes un vizualizācijas vide. Tā palīdz cilvēkiem bez programmēšanas un padziļinātām datu analīzes prasmēm saprast savu datu struktūru, sagatavot datus izpētei, izvēlēties metodoloģiski piemērotas vizualizācijas un publicēt interaktīvus rezultātus.
 
 SYD sākas nevis ar tehnisku jautājumu “Kādu diagrammu vēlaties?”, bet ar pētnieka jautājumu:
 
@@ -19,9 +19,9 @@ SYD sākas nevis ar tehnisku jautājumu “Kādu diagrammu vēlaties?”, bet ar
 
 Rīks apvieno trīs savstarpēji saistītas daļas:
 
-- **SYD Guide** — humanitāro datu metodoloģiskais sarunu konsultants;
-- **SYD Explorer** — lokāla datu sagatavošanas, izpētes un vizualizācijas vide;
-- **SYD Library** — kurēta humanitāro datu metožu un vizualizāciju bibliotēka.
+- **SYD Guide** – humanitāro datu metodoloģiskais sarunu konsultants;
+- **SYD Explorer** – lokāla datu sagatavošanas, izpētes un vizualizācijas vide;
+- **SYD Library** – kurēta humanitāro datu metožu un vizualizāciju bibliotēka.
 
 Pētniecības datu kopa pēc noklusējuma paliek lietotāja ierīcē. SYD Guide nevar piekļūt datu failam un saņem tikai to tekstu, ko lietotājs apzināti ieraksta sarunā. Publiskām vizualizācijām lietotājs var izvēlēties savu publiski pieejamo Google Sheet kā datu avotu; SYD datus nekopē un neglabā savā serverī.
 
@@ -57,11 +57,11 @@ Atsevišķas metodes var būt noderīgas arī sociālo zinātņu pētniekiem, to
 
 ## 4. Galvenais solījums
 
-> Aprakstiet savu pētniecības jautājumu un datu struktūru. SYD palīdzēs sagatavot datus un izvēlēties piemērotākās izpētes un vizualizācijas metodes — bez programmēšanas.
+> Aprakstiet savu pētniecības jautājumu un datu struktūru. SYD palīdzēs sagatavot datus un izvēlēties piemērotākās izpētes un vizualizācijas metodes – bez programmēšanas.
 
 Īsais angļu valodas formulējums:
 
-> Describe your research question and data structure. SYD will guide you towards suitable methods and visualisations — without programming.
+> Describe your research question and data structure. SYD will guide you towards suitable methods and visualisations – without programming.
 
 ## 5. Produkta pamatprincipi
 
@@ -287,7 +287,7 @@ Live view katrā atvēršanas reizē nolasa aktuālo publiskā Google Sheet satu
 
 Publiskajā skatā skaidri jānorāda:
 
-> Live data — the visualisation reflects the current contents of the linked Google Sheet.
+> Live data – the visualisation reflects the current contents of the linked Google Sheet.
 
 ### 9.4. Snapshot
 
@@ -390,14 +390,14 @@ SYD ir izdevies, ja humanitāro zinātņu pētnieks bez programmēšanas pieredz
 
 ## 15. Attīstības posmi
 
-### 1. posms — universāls SYD kodols
+### 1. posms – universāls SYD kodols
 
 - atdalīt pašreizējo NSRD datu modeli no vizualizācijas dzinēja;
 - definēt universālu SYD projekta un datu modeli;
 - saglabāt NSRD kā demonstrācijas projektu;
 - pārbaudīt kodolu ar otru, no NSRD atšķirīgu datu kopu.
 
-### 2. posms — lokālā datu darba vide
+### 2. posms – lokālā datu darba vide
 
 - CSV/TSV imports;
 - kolonnu konfigurēšanas vednis;
@@ -405,21 +405,21 @@ SYD ir izdevies, ja humanitāro zinātņu pētnieks bez programmēšanas pieredz
 - pārveidojumu priekšskatījums un atsaukšana;
 - projekta saglabāšana un eksports.
 
-### 3. posms — SYD Library
+### 3. posms – SYD Library
 
 - metožu aprakstu shēma;
 - pirmie datu pārskata, laika, kategoriju un tīklu moduļi;
 - metodoloģiskie ierobežojumi un piemēru projekti;
 - moduļu atvēršana ar gatavu Explorer konfigurāciju.
 
-### 4. posms — SYD Guide
+### 4. posms – SYD Guide
 
 - vadīta saruna par pētījuma jautājumu un datu struktūru;
 - strukturēta SYD Library moduļu ieteikšana;
 - datu sagatavošanas kontrolsaraksts;
 - tehniski garantēta datu failu nepieejamība LLM.
 
-### 5. posms — publiskie skati
+### 5. posms – publiskie skati
 
 - publiska Google Sheet pieslēgšana;
 - konfigurācijas saglabāšana URL fragmentā;
@@ -427,7 +427,7 @@ SYD ir izdevies, ja humanitāro zinātņu pētnieks bez programmēšanas pieredz
 - datu avota un atjaunošanas statusa norāde;
 - kopīgojamās saites pārbaude.
 
-### 6. posms — paplašināšana
+### 6. posms – paplašināšana
 
 - kartes un telpiskie dati;
 - vairāku tabulu sasaistīšana;
@@ -439,11 +439,11 @@ SYD ir izdevies, ja humanitāro zinātņu pētnieks bez programmēšanas pieredz
 
 ### Latviski
 
-> **SYD — See Your Data** ir vadīta humanitāro datu izpētes un vizualizācijas vide. Aprakstiet savu pētniecības jautājumu, izvēlieties piemērotu metodi un izpētiet savus datus bez programmēšanas. Privāta datu kopa paliek jūsu ierīcē; publiskai vizualizācijai varat izmantot savu publiski pieejamo Google Sheet.
+> **SYD – See Your Data** ir vadīta humanitāro datu izpētes un vizualizācijas vide. Aprakstiet savu pētniecības jautājumu, izvēlieties piemērotu metodi un izpētiet savus datus bez programmēšanas. Privāta datu kopa paliek jūsu ierīcē; publiskai vizualizācijai varat izmantot savu publiski pieejamo Google Sheet.
 
 ### English
 
-> **SYD — See Your Data** is a guided data exploration and visualisation environment for humanities research. Describe your research question, choose an appropriate method, and explore your data without programming. Your private dataset stays on your device; for a public visualisation, you can connect your own publicly available Google Sheet.
+> **SYD – See Your Data** is a guided data exploration and visualisation environment for humanities research. Describe your research question, choose an appropriate method, and explore your data without programming. Your private dataset stays on your device; for a public visualisation, you can connect your own publicly available Google Sheet.
 
 ## 17. Galvenais privātuma formulējums
 
@@ -457,8 +457,8 @@ SYD ir izdevies, ja humanitāro zinātņu pētnieks bez programmēšanas pieredz
 
 ## 18. Atsauces sākotnējai izstrādei
 
-- [Palladio](https://hdlab.stanford.edu/palladio/) — tabulāru humanitāro datu izpētes un vizualizācijas precedents.
-- [Google Sheets as a data source](https://developers.google.com/chart/interactive/docs/spreadsheets) — publiska Google Sheet izmantošana tīmekļa vizualizācijās.
-- [GitHub Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits) — statiskas vietnes publicēšanas robežas.
-- [OpenAI data controls](https://developers.openai.com/api/docs/guides/your-data) — LLM sarunas datu apstrādes nosacījumi, kas jāņem vērā SYD Guide.
-- [European Commission: GDPR principles](https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/principles-gdpr_en) — datu minimizācijas un privātuma pēc noklusējuma principi.
+- [Palladio](https://hdlab.stanford.edu/palladio/) – tabulāru humanitāro datu izpētes un vizualizācijas precedents.
+- [Google Sheets as a data source](https://developers.google.com/chart/interactive/docs/spreadsheets) – publiska Google Sheet izmantošana tīmekļa vizualizācijās.
+- [GitHub Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits) – statiskas vietnes publicēšanas robežas.
+- [OpenAI data controls](https://developers.openai.com/api/docs/guides/your-data) – LLM sarunas datu apstrādes nosacījumi, kas jāņem vērā SYD Guide.
+- [European Commission: GDPR principles](https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/principles-gdpr_en) – datu minimizācijas un privātuma pēc noklusējuma principi.
