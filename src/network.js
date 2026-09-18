@@ -1,7 +1,5 @@
 const WIDTH = 900;
 const HEIGHT = 570;
-const STORAGE_KEY = "syd-network-preferences-v2";
-
 const PALETTES = {
   archive: { label: "Arhīvs", colors: ["#114b94", "#c83f00", "#2b783f", "#cf0060", "#02a49f"] },
   neon: { label: "Neons", colors: ["#1e90ff", "#00c96c", "#ff0099", "#b100ff", "#00bfb6"] },
@@ -10,20 +8,19 @@ const PALETTES = {
   vivid: { label: "Košums", colors: ["#673ab7", "#ff5722", "#e6c900", "#b51d84", "#008f9c"] },
 };
 
-export function renderInteractiveNetwork(container, data) {
-  const preferences = readPreferences();
+export function renderInteractiveNetwork(container, data, sharedState, onStateChange = () => {}) {
   const graph = makeGraph(data);
   const state = {
-    layout: preferences.layout || "bipartite",
-    palette: preferences.palette || "archive",
-    style: preferences.style || "standard",
-    animation: preferences.animation || "none",
-    labelMode: preferences.labelMode || "active",
-    graphLabelScale: preferences.graphLabelScale || 1,
-    zoom: 1,
-    pan: { x: 0, y: 0 },
-    selected: new Set(),
-    positions: new Map(),
+    layout: sharedState.layout || "bipartite",
+    palette: sharedState.palette || "archive",
+    style: sharedState.style || "standard",
+    animation: sharedState.animation || "none",
+    labelMode: sharedState.labelMode || "active",
+    graphLabelScale: sharedState.labelScale || 1,
+    zoom: sharedState.zoom || 1,
+    pan: { ...sharedState.pan },
+    selected: new Set(sharedState.selectedNodeIds.filter((id) => graph.nodes.some((node) => node.id === id))),
+    positions: new Map(sharedState.manualPositions),
     drag: null,
   };
 
@@ -40,7 +37,7 @@ export function renderInteractiveNetwork(container, data) {
   layoutSelect.value = state.layout;
   styleSelect.value = state.style;
   animationSelect.value = state.animation;
-  resetPositions();
+  if (!graph.nodes.every((node) => state.positions.has(node.id))) resetPositions();
   render();
   window.lucide?.createIcons({ attrs: { "stroke-width": 1.8 } });
 
@@ -52,7 +49,7 @@ export function renderInteractiveNetwork(container, data) {
     }
     if (event.target.matches("[data-network-style]")) state.style = event.target.value;
     if (event.target.matches("[data-network-animation]")) state.animation = event.target.value;
-    savePreferences(state);
+    commitState();
     render();
   });
 
@@ -62,7 +59,7 @@ export function renderInteractiveNetwork(container, data) {
     const node = event.target.closest("[data-node-id]");
     if (paletteButton) {
       state.palette = paletteButton.dataset.palette;
-      savePreferences(state);
+      commitState();
       render();
       return;
     }
@@ -105,6 +102,7 @@ export function renderInteractiveNetwork(container, data) {
         y: clamp(state.drag.origin.y + dy / state.zoom, 45, HEIGHT - 45),
       });
     }
+    syncSharedState();
     renderGraph();
   });
 
@@ -119,6 +117,7 @@ export function renderInteractiveNetwork(container, data) {
     const graphY = (point.y - state.pan.y) / oldZoom;
     state.zoom = nextZoom;
     state.pan = { x: point.x - graphX * nextZoom, y: point.y - graphY * nextZoom };
+    syncSharedState();
     renderGraph();
   }, { passive: false });
 
@@ -137,13 +136,11 @@ export function renderInteractiveNetwork(container, data) {
     if (action === "labels") {
       const modes = ["all", "active", "none"];
       state.labelMode = modes[(modes.indexOf(state.labelMode) + 1) % modes.length];
-      savePreferences(state);
       announce(`Nosaukumi: ${{ all: "visi", active: "atlasītie", none: "paslēpti" }[state.labelMode]}.`);
     }
     if (action === "label-size") {
-      const sizes = [0.85, 1, 1.2];
+      const sizes = [1, 1.25, 1.5];
       state.graphLabelScale = sizes[(sizes.indexOf(state.graphLabelScale) + 1) % sizes.length];
-      savePreferences(state);
       announce(`Nosaukumu izmērs: ${Math.round(state.graphLabelScale * 100)}%.`);
     }
     if (action === "reset") {
@@ -153,6 +150,7 @@ export function renderInteractiveNetwork(container, data) {
       resetPositions();
       announce("Tīkla novietojums atjaunots.");
     }
+    commitState();
     render();
   }
 
@@ -162,18 +160,38 @@ export function renderInteractiveNetwork(container, data) {
       else state.selected = new Set([id]);
     } else if (state.selected.has(id)) state.selected.delete(id);
     else state.selected.add(id);
+    commitState();
     render();
   }
 
   function resetPositions() {
     state.positions = layoutPositions(graph.nodes, state.layout);
+    syncSharedState();
+  }
+
+  function syncSharedState() {
+    sharedState.layout = state.layout;
+    sharedState.palette = state.palette;
+    sharedState.style = state.style;
+    sharedState.animation = state.animation;
+    sharedState.labelMode = state.labelMode;
+    sharedState.labelScale = state.graphLabelScale;
+    sharedState.zoom = state.zoom;
+    sharedState.pan = { ...state.pan };
+    sharedState.selectedNodeIds = [...state.selected];
+    sharedState.manualPositions = new Map(state.positions);
+  }
+
+  function commitState() {
+    syncSharedState();
+    onStateChange(sharedState);
   }
 
   function render() {
     root.dataset.palette = state.palette;
     root.dataset.style = state.style;
     root.dataset.animation = state.animation;
-    svg.className.baseVal = ["syd-network-svg", "network-canvas", state.layout === "free" ? "" : "is-structured", state.layout === "bipartite" ? "is-bipartite" : "", state.selected.size ? "has-selection" : "", `animation-${state.animation}`, `style-${state.style}`].filter(Boolean).join(" ");
+    svg.className.baseVal = ["syd-network-svg", "network-canvas", state.layout === "force" ? "" : "is-structured", state.layout === "bipartite" ? "is-bipartite" : "", state.selected.size ? "has-selection" : "", `animation-${state.animation}`, `style-${state.style}`].filter(Boolean).join(" ");
     svg.style.setProperty("--graph-label-scale", state.graphLabelScale);
     root.style.setProperty("--node-a", PALETTES[state.palette].colors[0]);
     root.style.setProperty("--node-b", PALETTES[state.palette].colors[1]);
@@ -218,7 +236,7 @@ export function renderInteractiveNetwork(container, data) {
 
   function nodeMarkup(node, maxNode, hasSelection, related) {
     const position = state.positions.get(node.id);
-    const radius = state.layout === "free"
+    const radius = state.layout === "force"
       ? Math.min(27, 6 + Math.sqrt(node.count) * 2.2)
       : Math.min(15, 3.5 + Math.sqrt(node.count) * 1.45);
     const selected = state.selected.has(node.id);
@@ -284,7 +302,7 @@ function layoutPositions(nodes, layout) {
   if (layout === "hierarchical") {
     spread(first, 120, 130, 770, true, positions);
     spread(second, 450, 130, 770, true, positions);
-  } else if (layout === "free") {
+  } else if (layout === "force") {
     nodes.forEach((node, index) => {
       const angle = (index / Math.max(nodes.length, 1)) * Math.PI * 2 - Math.PI / 2;
       const radius = index % 2 ? 205 : 150;
@@ -319,7 +337,7 @@ function shellMarkup(data) {
     <div class="syd-network-toolbar network-toolbar network-toolbar-secondary" aria-label="Tīkla iestatījumi">
       <div class="syd-network-toolbar-tools toolbar-tools">
         <div class="syd-network-view-options network-view-options">
-          <label class="syd-network-select network-select"><span>Izkārtojums</span><select data-network-layout><option value="bipartite">Divdaļīgs</option><option value="hierarchical">Hierarhisks</option><option value="free">Brīvais</option></select></label>
+          <label class="syd-network-select network-select"><span>Izkārtojums</span><select data-network-layout><option value="bipartite">Divdaļīgs</option><option value="hierarchical">Hierarhisks</option><option value="force">Brīvais</option></select></label>
           <label class="syd-network-select network-select"><span>Stils</span><select data-network-style><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label>
           <label class="syd-network-select network-select"><span>Kustība</span><select data-network-animation><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label>
           <fieldset class="syd-network-palettes"><legend>Palete</legend><div>${paletteButtons}</div></fieldset>
@@ -349,16 +367,6 @@ function definitionsMarkup() {
     <pattern id="syd-hatch-a" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(17)"><rect width="7" height="7" fill="var(--network-paper)"></rect><path d="M0 1H7M0 5H7" stroke="var(--node-a)" stroke-width="2.1" opacity=".86"></path></pattern>
     <pattern id="syd-hatch-b" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)"><rect width="7" height="7" fill="var(--network-paper)"></rect><path d="M0 1H7M0 5H7" stroke="var(--node-b)" stroke-width="2.1" opacity=".86"></path></pattern>
   </defs>`;
-}
-
-function readPreferences() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { return {}; }
-}
-
-function savePreferences(state) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ layout: state.layout, palette: state.palette, style: state.style, animation: state.animation, labelMode: state.labelMode, graphLabelScale: state.graphLabelScale }));
-  } catch { /* Storage may be unavailable in a private browser context. */ }
 }
 
 function shorten(value) {

@@ -1,5 +1,20 @@
 import { SYD_LIBRARY } from "./library.js";
-import { renderInteractiveNetwork } from "./network.js?v=7";
+import { renderInteractiveNetwork } from "./network.js?v=8";
+import {
+  createBipartiteGraph,
+  createVisualizationModel,
+  filterVisualizationRecords,
+  roleForColumn,
+} from "./visualization-data.js?v=8";
+import {
+  clearVisualizationFilters,
+  createVisualizationState,
+  initializeVisualizationState,
+  reconcileVisualizationState,
+  setRoleFilter,
+  setVisualizationOption,
+  visualizationPreferences,
+} from "./visualization-state.js?v=8";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_ROWS = 10_000;
@@ -20,6 +35,7 @@ const COLUMN_TYPES = [
   ["tukšs", "Tukšs lauks"],
 ];
 window.lucide?.createIcons();
+const savedVisualizationPreferences = readChartPreferences();
 
 const state = {
   rows: [],
@@ -33,11 +49,8 @@ const state = {
   structureConfirmed: false,
   moduleId: "",
   recommendations: [],
-  searchQuery: "",
-  filters: new Map(),
-  chartPalette: readChartPreferences().palette || "archive",
-  chartStyle: readChartPreferences().style || "standard",
-  chartAnimation: readChartPreferences().animation || "none",
+  visualizationModel: null,
+  visualization: createVisualizationState(savedVisualizationPreferences),
   focusReturnScroll: 0,
 };
 
@@ -117,29 +130,28 @@ elements.fieldSelect?.addEventListener("change", renderVisualisation);
 elements.secondFieldSelect?.addEventListener("change", renderVisualisation);
 elements.limitSelect?.addEventListener("change", renderVisualisation);
 elements.searchFilter?.addEventListener("input", () => {
-  state.searchQuery = elements.searchFilter.value;
+  state.visualization.searchQuery = elements.searchFilter.value;
   renderVisualisation();
 });
 elements.generatedFilters?.addEventListener("change", (event) => {
   const select = event.target.closest("[data-filter-column]");
   if (!select) return;
-  if (select.value) state.filters.set(select.dataset.filterColumn, select.value);
-  else state.filters.delete(select.dataset.filterColumn);
+  setFilterForColumn(select.dataset.filterColumn, select.value);
   renderVisualisation();
 });
 elements.clearVisualFilters?.addEventListener("click", clearVisualFilters);
 elements.chartStyle?.addEventListener("change", () => {
-  state.chartStyle = elements.chartStyle.value;
+  setVisualizationOption(state.visualization, "style", elements.chartStyle.value);
   saveChartPreferences();
   applyChartPreferences();
 });
 elements.chartAnimation?.addEventListener("change", () => {
-  state.chartAnimation = elements.chartAnimation.value;
+  setVisualizationOption(state.visualization, "animation", elements.chartAnimation.value);
   saveChartPreferences();
   applyChartPreferences();
 });
 elements.chartPaletteButtons.forEach((button) => button.addEventListener("click", () => {
-  state.chartPalette = button.dataset.chartPalette;
+  setVisualizationOption(state.visualization, "palette", button.dataset.chartPalette);
   saveChartPreferences();
   applyChartPreferences();
 }));
@@ -148,9 +160,9 @@ elements.closeVisualisationFocus?.addEventListener("click", closeVisualisationFo
 elements.visualOutput?.addEventListener("click", (event) => {
   const target = event.target.closest("[data-filter-field][data-filter-value]");
   if (!target) return;
-  state.filters.set(target.dataset.filterField, target.dataset.filterValue);
+  setFilterForColumn(target.dataset.filterField, target.dataset.filterValue);
   if (target.dataset.secondFilterField && target.dataset.secondFilterValue) {
-    state.filters.set(target.dataset.secondFilterField, target.dataset.secondFilterValue);
+    setFilterForColumn(target.dataset.secondFilterField, target.dataset.secondFilterValue);
   }
   renderGeneratedFilters();
   renderVisualisation();
@@ -376,8 +388,7 @@ function openDataset(dataset, name, options = {}) {
   state.structureConfirmed = false;
   state.moduleId = "";
   state.recommendations = [];
-  state.searchQuery = "";
-  state.filters = new Map();
+  rebuildVisualizationModel(true);
   if (elements.searchFilter) elements.searchFilter.value = "";
   elements.datasetName.textContent = name;
   elements.sheetControl.hidden = !state.workbook;
@@ -488,6 +499,7 @@ function updateColumnStructure(event) {
   }
 
   state.structureConfirmed = false;
+  rebuildVisualizationModel(false);
   updateStructureSummary();
   renderOverview();
   if (!elements.questionSection.hidden) configureRecommendations();
@@ -539,42 +551,45 @@ function valuesForProfile(row, profile) {
   return profile.type === "vairākas vērtības" ? splitValues(raw) : [raw];
 }
 
+function rebuildVisualizationModel(reset = false) {
+  state.visualizationModel = createVisualizationModel(state.rows, state.profiles);
+  if (reset) initializeVisualizationState(state.visualization, state.visualizationModel);
+  else reconcileVisualizationState(state.visualization, state.visualizationModel);
+}
+
+function setFilterForColumn(column, value) {
+  const role = roleForColumn(state.visualizationModel, column);
+  if (role) setRoleFilter(state.visualization, role.id, value);
+}
+
+function filterValueForColumn(column) {
+  const role = roleForColumn(state.visualizationModel, column);
+  return role ? state.visualization.filters.get(role.id) : undefined;
+}
+
 function renderGeneratedFilters() {
   const profiles = filterProfiles();
-  const availableNames = new Set(profiles.map((profile) => profile.name));
-  for (const column of state.filters.keys()) {
-    if (!availableNames.has(column)) state.filters.delete(column);
+  const availableRoleIds = new Set(profiles.map((profile) => roleForColumn(state.visualizationModel, profile.name)?.id).filter(Boolean));
+  for (const roleId of state.visualization.filters.keys()) {
+    if (!availableRoleIds.has(roleId)) state.visualization.filters.delete(roleId);
   }
   elements.generatedFilters.innerHTML = profiles.map((profile) => {
     const values = [...new Set(state.rows.flatMap((row) => valuesForProfile(row, profile)))];
     values.sort((first, second) => ["gads", "datums"].includes(profile.type)
       ? compareTimeValues(first, second)
       : first.localeCompare(second, "lv", { numeric: true }));
-    const selected = state.filters.get(profile.name) || "";
+    const selected = filterValueForColumn(profile.name) || "";
     return `<label class="filter-field"><span>${escapeHtml(profile.name)}</span><select data-filter-column="${escapeHtml(profile.name)}" aria-label="${escapeHtml(profile.name)}"><option value="">Visas vērtības</option>${values.map((value) => `<option value="${escapeHtml(value)}"${value === selected ? " selected" : ""}>${escapeHtml(value)}</option>`).join("")}</select></label>`;
   }).join("");
   window.lucide?.createIcons({ attrs: { "stroke-width": 1.8 } });
 }
 
 function getFilteredRows() {
-  const query = normalizeFilterText(state.searchQuery);
-  const includedColumns = state.profiles.filter((profile) => profile.included).map((profile) => profile.name);
-  return state.rows.filter((row) => {
-    if (query && !includedColumns.some((column) => normalizeFilterText(row[column]).includes(query))) return false;
-    for (const [column, expected] of state.filters) {
-      const profile = state.profiles.find((item) => item.name === column);
-      if (!profile || !valuesForProfile(row, profile).includes(expected)) return false;
-    }
-    return true;
-  });
-}
-
-function normalizeFilterText(value) {
-  return String(value ?? "").toLocaleLowerCase("lv-LV").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return filterVisualizationRecords(state.visualizationModel, state.visualization).map((record) => record.sourceRow);
 }
 
 function updateFilterSummary(rows) {
-  const activeCount = state.filters.size + (state.searchQuery.trim() ? 1 : 0);
+  const activeCount = state.visualization.filters.size + (state.visualization.searchQuery.trim() ? 1 : 0);
   elements.filterSummary.textContent = activeCount
     ? `${rows.length.toLocaleString("lv-LV")} no ${state.rows.length.toLocaleString("lv-LV")} ierakstiem · ${activeCount} ${activeCount === 1 ? "filtrs" : "filtri"}`
     : `${state.rows.length.toLocaleString("lv-LV")} ieraksti`;
@@ -582,8 +597,7 @@ function updateFilterSummary(rows) {
 }
 
 function clearVisualFilters() {
-  state.searchQuery = "";
-  state.filters.clear();
+  clearVisualizationFilters(state.visualization);
   elements.searchFilter.value = "";
   renderGeneratedFilters();
   renderVisualisation();
@@ -595,19 +609,19 @@ function readChartPreferences() {
 
 function saveChartPreferences() {
   try {
-    localStorage.setItem(CHART_PREFERENCES_KEY, JSON.stringify({ palette: state.chartPalette, style: state.chartStyle, animation: state.chartAnimation }));
+    localStorage.setItem(CHART_PREFERENCES_KEY, JSON.stringify(visualizationPreferences(state.visualization)));
   } catch { /* Storage may be unavailable in a private browser context. */ }
 }
 
 function applyChartPreferences() {
   if (!elements.explorerShell) return;
-  elements.explorerShell.dataset.vizPalette = state.chartPalette;
-  elements.explorerShell.dataset.vizStyle = state.chartStyle;
-  elements.explorerShell.dataset.vizAnimation = state.chartAnimation;
-  elements.chartStyle.value = state.chartStyle;
-  elements.chartAnimation.value = state.chartAnimation;
+  elements.explorerShell.dataset.vizPalette = state.visualization.palette;
+  elements.explorerShell.dataset.vizStyle = state.visualization.style;
+  elements.explorerShell.dataset.vizAnimation = state.visualization.animation;
+  elements.chartStyle.value = state.visualization.style;
+  elements.chartAnimation.value = state.visualization.animation;
   elements.chartPaletteButtons.forEach((button) => {
-    const active = button.dataset.chartPalette === state.chartPalette;
+    const active = button.dataset.chartPalette === state.visualization.palette;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
   });
@@ -744,7 +758,7 @@ function renderVisualisation() {
   const limit = Number(elements.limitSelect.value);
   const sorted = [...counts.entries()].sort((a, b) => config.renderer === "time" ? compareTimeValues(a[0], b[0]) : b[1] - a[1] || a[0].localeCompare(b[0], "lv")).slice(0, limit);
   const max = Math.max(...sorted.map(([, count]) => count), 1);
-  elements.visualOutput.innerHTML = sorted.length ? `<div class="bar-chart" role="img" aria-label="${escapeHtml(elements.visualTitle.textContent)} kolonnai ${escapeHtml(field)}">${sorted.map(([label, count], index) => `<button class="bar-row" type="button" data-filter-field="${escapeHtml(field)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${state.filters.get(field) === label}"><span class="bar-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span><span class="bar-track" aria-hidden="true"><span class="bar-fill" style="width:${(count / max) * 100}%;--chart-index:${index}"></span></span><strong class="bar-value">${count}</strong></button>`).join("")}</div>` : `<div class="empty-state"><p>Šai filtru kombinācijai datu nav.</p></div>`;
+  elements.visualOutput.innerHTML = sorted.length ? `<div class="bar-chart" role="img" aria-label="${escapeHtml(elements.visualTitle.textContent)} kolonnai ${escapeHtml(field)}">${sorted.map(([label, count], index) => `<button class="bar-row" type="button" data-filter-field="${escapeHtml(field)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${filterValueForColumn(field) === label}"><span class="bar-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span><span class="bar-track" aria-hidden="true"><span class="bar-fill" style="width:${(count / max) * 100}%;--chart-index:${index}"></span></span><strong class="bar-value">${count}</strong></button>`).join("")}</div>` : `<div class="empty-state"><p>Šai filtru kombinācijai datu nav.</p></div>`;
 }
 
 function renderDataOverview(rows) {
@@ -760,7 +774,7 @@ function renderDataOverview(rows) {
   const barsProfile = categoricalProfiles.find((profile) => profile.name !== donutProfile?.name) || donutProfile;
   const columnProfile = timeProfile || categoricalProfiles.find((profile) => ![donutProfile?.name, barsProfile?.name].includes(profile.name));
   const uniqueEntities = donutProfile ? new Set(rows.flatMap((row) => valuesForProfile(row, donutProfile))).size : 0;
-  const activeFilters = state.filters.size + (state.searchQuery.trim() ? 1 : 0);
+  const activeFilters = state.visualization.filters.size + (state.visualization.searchQuery.trim() ? 1 : 0);
   const colors = ["var(--viz-blue)", "var(--viz-orange)", "var(--viz-green)", "var(--viz-magenta)", "var(--viz-teal)", "var(--viz-amber)"];
   const donutCounts = donutProfile ? fieldCounts(rows, donutProfile).slice(0, 6) : [];
   const donutTotal = Math.max(1, donutCounts.reduce((sum, [, count]) => sum + count, 0));
@@ -775,7 +789,7 @@ function renderDataOverview(rows) {
   const columnCounts = columnProfile ? fieldCounts(rows, columnProfile, ["gads", "datums"].includes(columnProfile.type)).slice(0, 12) : [];
   const columnMax = Math.max(1, ...columnCounts.map(([, count]) => count));
 
-  elements.visualOutput.innerHTML = `<div class="nsrd-overview analytics-surface animation-${escapeHtml(state.chartAnimation)} style-${escapeHtml(state.chartStyle)}">
+  elements.visualOutput.innerHTML = `<div class="nsrd-overview analytics-surface animation-${escapeHtml(state.visualization.animation)} style-${escapeHtml(state.visualization.style)}">
     <div class="overview-summary analytics-summary" aria-label="Datu pārskata kopsavilkums">
       <div><strong>${rows.length.toLocaleString("lv-LV")}</strong><span>ieraksti</span></div>
       <div><strong>${uniqueEntities.toLocaleString("lv-LV")}</strong><span>${escapeHtml(donutProfile?.name || "vērtības")}</span></div>
@@ -784,15 +798,15 @@ function renderDataOverview(rows) {
     <div class="overview-grid analytics-grid">
       <section class="overview-chart analytics-chart overview-donut-chart">
         <h4>${escapeHtml(donutProfile ? `${donutProfile.name} · sadalījums` : "Vērtību sadalījums")}</h4>
-        ${donutCounts.length ? `<div class="donut-layout"><div class="overview-donut" style="--donut:${donutStops}"><div><strong>${donutTotal}</strong><span>vērtības</span></div></div><div class="donut-legend">${donutCounts.map(([label, count], index) => `<button type="button" data-filter-field="${escapeHtml(donutProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${state.filters.get(donutProfile.name) === label}"><i style="--legend-color:${colors[index % colors.length]}"></i><span>${escapeHtml(label)}</span><strong>${count}</strong></button>`).join("")}</div></div>` : `<p class="chart-empty">Nav piemērotas kategoriskas kolonnas.</p>`}
+        ${donutCounts.length ? `<div class="donut-layout"><div class="overview-donut" style="--donut:${donutStops}"><div><strong>${donutTotal}</strong><span>vērtības</span></div></div><div class="donut-legend">${donutCounts.map(([label, count], index) => `<button type="button" data-filter-field="${escapeHtml(donutProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${filterValueForColumn(donutProfile.name) === label}"><i style="--legend-color:${colors[index % colors.length]}"></i><span>${escapeHtml(label)}</span><strong>${count}</strong></button>`).join("")}</div></div>` : `<p class="chart-empty">Nav piemērotas kategoriskas kolonnas.</p>`}
       </section>
       <section class="overview-chart analytics-chart overview-bars-chart">
         <h4>${escapeHtml(barsProfile ? `${barsProfile.name} · biežākās vērtības` : "Biežākās vērtības")}</h4>
-        ${barCounts.length ? `<div class="overview-bars analytics-bars">${barCounts.map(([label, count], index) => `<button class="analytics-bar" type="button" data-filter-field="${escapeHtml(barsProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${state.filters.get(barsProfile.name) === label}" style="--bar-size:${count / barMax * 100}%;--chart-color:${colors[index % colors.length]}"><span>${escapeHtml(label)}</span><i><b></b></i><strong>${count}</strong></button>`).join("")}</div>` : `<p class="chart-empty">Nav otras salīdzināmas kolonnas.</p>`}
+        ${barCounts.length ? `<div class="overview-bars analytics-bars">${barCounts.map(([label, count], index) => `<button class="analytics-bar" type="button" data-filter-field="${escapeHtml(barsProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${filterValueForColumn(barsProfile.name) === label}" style="--bar-size:${count / barMax * 100}%;--chart-color:${colors[index % colors.length]}"><span>${escapeHtml(label)}</span><i><b></b></i><strong>${count}</strong></button>`).join("")}</div>` : `<p class="chart-empty">Nav otras salīdzināmas kolonnas.</p>`}
       </section>
       <section class="overview-chart analytics-chart artifact-chart overview-columns-chart">
         <h4>${escapeHtml(columnProfile ? `${columnProfile.name} · sadalījums` : "Ierakstu sadalījums")}</h4>
-        ${columnCounts.length ? `<div class="overview-columns artifact-columns">${columnCounts.map(([label, count], index) => `<button class="artifact-column" type="button" data-filter-field="${escapeHtml(columnProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${state.filters.get(columnProfile.name) === label}" style="--bar-size:${Math.max(4, count / columnMax * 100)}%;--chart-color:${colors[index % colors.length]}"><strong>${count}</strong><i><b></b></i><span>${escapeHtml(label)}</span></button>`).join("")}</div>` : `<p class="chart-empty">Nav piemērotas laika vai kategoriskas kolonnas.</p>`}
+        ${columnCounts.length ? `<div class="overview-columns artifact-columns">${columnCounts.map(([label, count], index) => `<button class="artifact-column" type="button" data-filter-field="${escapeHtml(columnProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${filterValueForColumn(columnProfile.name) === label}" style="--bar-size:${Math.max(4, count / columnMax * 100)}%;--chart-color:${colors[index % colors.length]}"><strong>${count}</strong><i><b></b></i><span>${escapeHtml(label)}</span></button>`).join("")}</div>` : `<p class="chart-empty">Nav piemērotas laika vai kategoriskas kolonnas.</p>`}
       </section>
     </div>
     <div class="overview-footer analytics-footer"><strong>${rows.length.toLocaleString("lv-LV")} ieraksti</strong><span>Klikšķiniet uz diagrammas elementa, lai filtrētu visu pārskatu.</span>${activeFilters ? `<button type="button" data-clear-dashboard-filters>Notīrīt atlasi</button>` : ""}</div>
@@ -851,6 +865,9 @@ function renderNetwork() {
     firstEntries,
     secondEntries,
     links,
+  }, state.visualization, () => {
+    saveChartPreferences();
+    applyChartPreferences();
   });
 }
 
@@ -858,25 +875,25 @@ function buildPairData() {
   const firstField = elements.fieldSelect.value;
   const secondField = elements.secondFieldSelect.value;
   if (!firstField || !secondField || firstField === secondField) return null;
-  const firstProfile = state.profiles.find((profile) => profile.name === firstField);
-  const secondProfile = state.profiles.find((profile) => profile.name === secondField);
+  const firstRole = roleForColumn(state.visualizationModel, firstField);
+  const secondRole = roleForColumn(state.visualizationModel, secondField);
+  if (!firstRole || !secondRole) return null;
+  state.visualization.bipartiteRoleIds = [firstRole.id, secondRole.id];
+  const records = filterVisualizationRecords(state.visualizationModel, state.visualization);
+  const graph = createBipartiteGraph(state.visualizationModel, firstRole.id, secondRole.id, records);
+  if (!graph) return null;
   const pairs = new Map();
   const firstCounts = new Map();
   const secondCounts = new Map();
-
-  for (const row of getFilteredRows()) {
-    const firstRaw = String(row[firstField] ?? "").trim();
-    const secondRaw = String(row[secondField] ?? "").trim();
-    const firstValues = firstProfile?.type === "vairākas vērtības" ? splitValues(firstRaw) : [firstRaw || "Nav norādīts"];
-    const secondValues = secondProfile?.type === "vairākas vērtības" ? splitValues(secondRaw) : [secondRaw || "Nav norādīts"];
-    for (const firstValue of firstValues) {
-      firstCounts.set(firstValue, (firstCounts.get(firstValue) || 0) + 1);
-      for (const secondValue of secondValues) {
-        const key = `${firstValue}\u0000${secondValue}`;
-        pairs.set(key, (pairs.get(key) || 0) + 1);
-      }
-    }
-    for (const secondValue of secondValues) secondCounts.set(secondValue, (secondCounts.get(secondValue) || 0) + 1);
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  for (const node of graph.nodes) {
+    if (node.roleId === firstRole.id) firstCounts.set(node.label, node.degree);
+    if (node.roleId === secondRole.id) secondCounts.set(node.label, node.degree);
+  }
+  for (const edge of graph.edges) {
+    const firstNode = nodeById.get(edge.source);
+    const secondNode = nodeById.get(edge.target);
+    if (firstNode && secondNode) pairs.set(`${firstNode.label}\u0000${secondNode.label}`, edge.weight);
   }
   return { firstField, secondField, pairs, firstCounts, secondCounts };
 }
@@ -895,7 +912,8 @@ function renderRecords() {
 
 function resetWorkspace() {
   history.replaceState(null, "", "#workspace");
-  Object.assign(state, { rows: [], columns: [], profiles: [], name: "", question: "categories", workbook: null, workbookName: "", sheetName: "", structureConfirmed: false, moduleId: "", recommendations: [], searchQuery: "", filters: new Map() });
+  Object.assign(state, { rows: [], columns: [], profiles: [], name: "", question: "categories", workbook: null, workbookName: "", sheetName: "", structureConfirmed: false, moduleId: "", recommendations: [], visualizationModel: null });
+  clearVisualizationFilters(state.visualization);
   if (elements.searchFilter) elements.searchFilter.value = "";
   if (elements.generatedFilters) elements.generatedFilters.innerHTML = "";
   elements.analysis.hidden = true;
