@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="lv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f0e7" />
+    <meta
+      name="description"
+      content="SYD ir humanitāro zinātņu datu izpētes un vizualizācijas vide pētniekiem bez programmēšanas pieredzes."
+    />
+    <title>SYD koncepcija – See Your Data</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="./src/concept.css" />
+  </head>
+  <body class="concept-page">
+    <a class="skip-link" href="#concept">Pāriet uz koncepciju</a>
+
+    <header class="site-header">
+      <a class="brand" href="./index.html" aria-label="SYD sākums">
+        <img class="brand-mark" src="./assets/brand-mark.svg" alt="" width="24" height="28" />
+        <span>
+          <strong>SYD</strong>
+          <small>See Your Data</small>
+        </span>
+      </a>
+      <nav aria-label="Galvenā navigācija">
+        <a href="./index.html#workspace">Izpētīt datus</a>
+        <a href="./index.html#principles">Kā tas darbojas</a>
+        <a href="./concept.html" aria-current="page">Koncepcija</a>
+      </nav>
+      <span class="prototype-label">Prototips 0.1</span>
+    </header>
+
+    <main class="concept-main" id="concept">
+      <section class="concept-hero" aria-labelledby="concept-title">
+        <div>
+          <p class="eyebrow">SYD koncepcija</p>
+          <h1 id="concept-title">Datu izpēte sākas ar jautājumu</h1>
+          <p class="concept-lead">
+            SYD palīdz humanitāro zinātņu pētniekiem saprast un vizualizēt
+            tabulās sakārtotus datus bez programmēšanas.
+          </p>
+        </div>
+        <aside class="development-note">
+          <span>Izstrādes procesā</span>
+          <p>Pieejamais prototips tiek pakāpeniski papildināts, un atsevišķas funkcijas vēl var mainīties.</p>
+        </aside>
+      </section>
+
+      <section class="concept-opening" aria-labelledby="opening-title">
+        <div>
+          <p class="eyebrow">Pamatideja</p>
+          <h2 id="opening-title">Nevis “kādu diagrammu?”, bet “ko vēlaties ieraudzīt?”</h2>
+        </div>
+        <div class="concept-prose">
+          <p>
+            SYD ir paredzēts darbam ar CSV, TSV un XLSX failiem, kuros apkopotas
+            personas, vietas, notikumi, institūcijas, darbi, datumi vai kategorijas.
+          </p>
+          <p>
+            Pētnieciskais jautājums palīdz izvēlēties piemērotu izpētes veidu.
+            Katram ieteiktajam skatam SYD paskaidro arī to, ko no rezultāta nevar secināt.
+          </p>
+        </div>
+      </section>
+
+      <section class="concept-section" aria-labelledby="workflow-title">
+        <div class="concept-section-heading">
+          <p class="eyebrow">Darba gaita</p>
+          <h2 id="workflow-title">No tabulas līdz interpretējamam skatam</h2>
+        </div>
+        <ol class="concept-steps">
+          <li>
+            <span>01</span>
+            <h3>Atveriet datus</h3>
+            <p>Izvēlieties CSV, TSV vai XLSX failu. Tas tiek nolasīts tikai jūsu pārlūkā.</p>
+          </li>
+          <li>
+            <span>02</span>
+            <h3>Pārbaudiet struktūru</h3>
+            <p>Labojiet automātiski noteiktos kolonnu tipus un izslēdziet nevajadzīgos laukus.</p>
+          </li>
+          <li>
+            <span>03</span>
+            <h3>Izvēlieties jautājumu</h3>
+            <p>SYD Library piedāvā līdz trim datiem un jautājumam piemērotiem skatiem.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="concept-section concept-views" aria-labelledby="views-title">
+        <div class="concept-section-heading">
+          <p class="eyebrow">SYD Library</p>
+          <h2 id="views-title">Ko var izpētīt?</h2>
+        </div>
+        <ul class="view-list">
+          <li><span>01</span><strong>Kategoriju biežumu</strong><small>Salīdziniet vienas kolonnas vērtības.</small></li>
+          <li><span>02</span><strong>Pārmaiņas laikā</strong><small>Pamaniet koncentrāciju un pārtraukumus.</small></li>
+          <li><span>03</span><strong>Vietu sadalījumu</strong><small>Pārskatiet vietu pieminējumus bez automātiskas ģeokodēšanas.</small></li>
+          <li><span>04</span><strong>Divu pazīmju saistību</strong><small>Salīdziniet divu kolonnu vērtību kombinācijas.</small></li>
+          <li><span>05</span><strong>Saikņu tīklu</strong><small>Aplūkojiet divu tipu objektu kopīgu parādīšanos.</small></li>
+          <li><span>06</span><strong>Atsevišķus ierakstus</strong><small>Pārbaudiet avota vērtības tabulā.</small></li>
+        </ul>
+      </section>
+
+      <section class="privacy-section" aria-labelledby="privacy-title">
+        <div>
+          <p class="eyebrow">Privātums pēc noklusējuma</p>
+          <h2 id="privacy-title">Jūsu dati paliek pie jums</h2>
+        </div>
+        <div class="concept-prose">
+          <p>
+            Lokāli atvērts fails netiek augšupielādēts SYD serverī vai nosūtīts
+            lielajam valodas modelim. SYD nepārraksta oriģinālo failu un neaizpilda
+            trūkstošās vērtības jūsu vietā.
+          </p>
+          <p>
+            Nenoteiktība humanitāro zinātņu datos ne vienmēr ir kļūda. Aptuvens
+            datums, vietvārdu varianti vai atšķirīgs personas vārda pieraksts var
+            būt pētnieciski nozīmīga informācija.
+          </p>
+        </div>
+      </section>
+
+      <section class="concept-future" aria-labelledby="future-title">
+        <div class="concept-section-heading">
+          <p class="eyebrow">Turpmākā attīstība</p>
+          <h2 id="future-title">Palīgs sarunai un publiski skati</h2>
+        </div>
+        <div class="future-columns">
+          <article>
+            <h3>SYD Guide</h3>
+            <p>
+              Plānotais sarunu palīgs palīdzēs formulēt jautājumu, sagatavot tabulu
+              un izvēlēties SYD Library moduli. Tas nevarēs piekļūt datu failam.
+            </p>
+          </article>
+          <article>
+            <h3>Kopīgojamas vizualizācijas</h3>
+            <p>
+              Publiski pieejamu Google Sheet varēs pieslēgt kopīgojamam skatam.
+              Privātiem datiem būs paredzēta lokāla izpēte un saglabāšana savā ierīcē.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="concept-closing">
+        <p class="eyebrow">Galvenais princips</p>
+        <p>
+          SYD neaizstāj pētnieka zināšanas un neinterpretē avotus viņa vietā.
+          Tas palīdz pamanīt sakarības, vienlaikus saglabājot pētnieka kontroli
+          pār datiem, to nozīmi un secinājumu robežām.
+        </p>
+        <a class="button button-dark concept-cta" href="./index.html#workspace">
+          Izmēģināt SYD
+          <i data-lucide="arrow-right" aria-hidden="true"></i>
+        </a>
+      </section>
+    </main>
+
+    <footer>
+      <p><strong>SYD – See Your Data</strong></p>
+      <p>LU Digitālo humanitāro zinātņu centrs</p>
+    </footer>
+
+    <script src="https://unpkg.com/lucide@0.503.0/dist/umd/lucide.min.js"></script>
+    <script>window.lucide?.createIcons();</script>
+  </body>
+</html>

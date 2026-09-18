@@ -34,7 +34,7 @@ The first browser-based prototype is implemented. It provides:
 
 Imported research data stays in the browser and is not uploaded to SYD or sent to an LLM. The existing NSRD/Seque visualisation remains a separate project and will later become a SYD demonstration configuration.
 
-The complete product concept is available in [docs/product-concept.md](docs/product-concept.md).
+The public, reader-facing concept is available in [concept.html](concept.html). Its concise source text is kept in [docs/product-concept.md](docs/product-concept.md).
 
 ## Planned public address
 
