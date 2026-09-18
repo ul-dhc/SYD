@@ -44,6 +44,7 @@ const elements = {
   sheetControl: document.querySelector("#sheet-control"),
   sheetSelect: document.querySelector("#sheet-select"),
   metrics: document.querySelector("#metrics"),
+  preparationAdvice: document.querySelector("#preparation-advice"),
   columnProfile: document.querySelector("#column-profile"),
   structureSummary: document.querySelector("#structure-summary"),
   confirmStructure: document.querySelector("#confirm-structure"),
@@ -386,6 +387,124 @@ function renderOverview() {
   const totalCells = state.rows.length * state.columns.length;
   const timeFields = state.profiles.filter((profile) => profile.included && ["gads", "datums"].includes(profile.type)).length;
   elements.metrics.innerHTML = [metricMarkup(state.rows.length, "ieraksti"), metricMarkup(state.columns.length, "kolonnas"), metricMarkup(totalCells ? `${Math.round((missing / totalCells) * 100)}%` : "0%", "tukšu šūnu"), metricMarkup(timeFields, "laika lauki")].join("");
+  renderPreparationAdvice();
+}
+
+function renderPreparationAdvice() {
+  const advice = [];
+  const missingProfiles = state.profiles.filter((profile) => profile.missing > 0);
+  const missingCells = missingProfiles.reduce((sum, profile) => sum + profile.missing, 0);
+  if (missingCells) {
+    const missingLabel = missingCells === 1 ? "1 tukša šūna" : `${missingCells.toLocaleString("lv-LV")} tukšas šūnas`;
+    advice.push({
+      icon: "circle-alert",
+      title: "Pārbaudiet tukšās vērtības",
+      text: `${missingLabel} ${columnLocation(missingProfiles.map((profile) => profile.name))}. Noskaidrojiet, vai ${missingCells === 1 ? "tā" : "tās"} nozīmē nezināmu, neattiecināmu vai trūkstošu vērtību.`,
+    });
+  }
+
+  const duplicateRows = countDuplicateRows();
+  if (duplicateRows) {
+    advice.push({
+      icon: "copy",
+      title: "Pārbaudiet atkārtotus ierakstus",
+      text: `${duplicateRows.toLocaleString("lv-LV")} ${duplicateRows === 1 ? "rinda pilnībā atkārtojas" : "rindas pilnībā atkārtojas"}. Saglabājiet dublikātus, ja atkārtojums avotā ir nozīmīgs.`,
+    });
+  }
+
+  const mixedDateColumns = state.profiles
+    .filter((profile) => profile.type === "datums")
+    .filter((profile) => new Set(state.rows.map((row) => dateFormatFamily(row[profile.name])).filter(Boolean)).size > 1)
+    .map((profile) => profile.name);
+  if (mixedDateColumns.length) {
+    advice.push({
+      icon: "calendar-range",
+      title: "Vienādojiet datumu pierakstu",
+      text: `${columnLocation(mixedDateColumns, true)} izmantoti vairāki datumu formāti. Avota failā saglabājiet datumus kā Excel datumus vai izmantojiet vienotu pierakstu.`,
+    });
+  }
+
+  const missingMarkers = findMissingMarkers();
+  if (missingMarkers.values.length) {
+    advice.push({
+      icon: "circle-help",
+      title: "Pārbaudiet trūkuma apzīmējumus",
+      text: `Atrastas vērtības ${missingMarkers.values.map((value) => `“${value}”`).join(", ")} ${columnLocation(missingMarkers.columns)}. Izlemiet, vai tās ir kategorijas vai trūkstoši dati.`,
+    });
+  }
+
+  if (state.sheetName === ALL_XLSX_SHEETS) {
+    advice.push({
+      icon: "layers-3",
+      title: "Pārbaudiet apvienoto darblapu struktūru",
+      text: "Tukša šūna var nozīmēt, ka attiecīgās kolonnas konkrētajā darblapā nebija. Izmantojiet kolonnu “XLSX darblapa”, lai pārbaudītu ierakstu izcelsmi.",
+    });
+  }
+
+  const multiValueColumns = state.profiles.filter((profile) => profile.type === "vairākas vērtības").map((profile) => profile.name);
+  if (multiValueColumns.length) {
+    advice.push({
+      icon: "list-tree",
+      title: "Vienojiet vairāku vērtību pierakstu",
+      text: `${columnLocation(multiValueColumns, true)} vienā šūnā ir vairākas vērtības. Lietojiet vienu atdalītāju un pārbaudiet, vai atdalījums nemaina nosaukumu nozīmi.`,
+    });
+  }
+
+  if (!advice.length) {
+    advice.push({
+      icon: "circle-check",
+      title: "Dati ir gatavi pirmajai analīzei",
+      text: "Acīmredzamas strukturālas problēmas nav atrastas. Pirms turpināšanas pārbaudiet automātiski noteiktos kolonnu tipus.",
+      ready: true,
+    });
+  }
+
+  elements.preparationAdvice.innerHTML = advice.slice(0, 4).map(preparationAdviceMarkup).join("");
+  window.lucide?.createIcons({ attrs: { "stroke-width": 1.8 } });
+}
+
+function preparationAdviceMarkup(item) {
+  return `<article class="preparation-item${item.ready ? " is-ready" : ""}"><i data-lucide="${item.icon}" aria-hidden="true"></i><div><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.text)}</span></div></article>`;
+}
+
+function countDuplicateRows() {
+  const rows = state.rows.map((row) => JSON.stringify(state.columns.map((column) => row[column] ?? "")));
+  return rows.length - new Set(rows).size;
+}
+
+function findMissingMarkers() {
+  const markerPattern = /^(?:n\/?a|na|nav|nav zināms|nezināms|unknown|null|none|\?|-)$/i;
+  const values = new Set();
+  const columns = new Set();
+  for (const row of state.rows) {
+    for (const column of state.columns) {
+      const value = String(row[column] ?? "").trim();
+      if (!value || !markerPattern.test(value)) continue;
+      values.add(value);
+      columns.add(column);
+    }
+  }
+  return { values: [...values].slice(0, 4), columns: [...columns] };
+}
+
+function dateFormatFamily(value) {
+  const normalized = String(value ?? "").trim();
+  if (!normalized) return "";
+  if (/^\d{4}[-/. ]\d{1,2}/.test(normalized)) return "year-first";
+  if (/^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}/.test(normalized)) return "day-first";
+  if (/[A-Za-zĀ-ž]/.test(normalized)) return "month-name";
+  return "other";
+}
+
+function columnList(columns) {
+  const visible = columns.slice(0, 3);
+  const remaining = columns.length - visible.length;
+  return `${visible.map((column) => `“${column}”`).join(", ")}${remaining ? ` un vēl ${remaining}` : ""}`;
+}
+
+function columnLocation(columns, capitalized = false) {
+  const label = columns.length === 1 ? "kolonnā" : "kolonnās";
+  return `${capitalized ? `${label[0].toLocaleUpperCase("lv")}${label.slice(1)}` : label} ${columnList(columns)}`;
 }
 
 function renderStructure() {
