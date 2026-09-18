@@ -144,12 +144,7 @@ function openXlsxSheet(sheetName) {
   try {
     const worksheet = state.workbook?.Sheets[sheetName];
     if (!worksheet) throw new Error("Izvēlēto XLSX darblapu neizdevās nolasīt.");
-    const matrix = window.XLSX.utils.sheet_to_json(worksheet, {
-      header: 1,
-      raw: false,
-      defval: "",
-      blankrows: false,
-    });
+    const matrix = xlsxWorksheetToMatrix(worksheet);
     state.sheetName = sheetName;
     openDataset(matrixToDataset(matrix), `${state.workbookName} · ${sheetName}`, { preserveWorkbook: true });
   } catch (error) {
@@ -163,12 +158,7 @@ function openAllXlsxSheets() {
     const skippedSheets = [];
     for (const sheetName of state.workbook?.SheetNames || []) {
       const worksheet = state.workbook.Sheets[sheetName];
-      const matrix = window.XLSX.utils.sheet_to_json(worksheet, {
-        header: 1,
-        raw: false,
-        defval: "",
-        blankrows: false,
-      });
+      const matrix = xlsxWorksheetToMatrix(worksheet);
       if (matrix.length < 2) {
         skippedSheets.push(sheetName);
         continue;
@@ -221,6 +211,16 @@ function uniqueColumnName(headers, preferredName) {
   return `${preferredName} (${number})`;
 }
 
+function xlsxWorksheetToMatrix(worksheet) {
+  const options = { header: 1, defval: "", blankrows: false };
+  const formatted = window.XLSX.utils.sheet_to_json(worksheet, { ...options, raw: false });
+  const raw = window.XLSX.utils.sheet_to_json(worksheet, { ...options, raw: true });
+  return formatted.map((row, rowIndex) => row.map((value, columnIndex) => {
+    const rawValue = raw[rowIndex]?.[columnIndex];
+    return rawValue instanceof Date ? rawValue : value;
+  }));
+}
+
 function detectDelimiter(text) {
   const firstLine = text.replace(/^\uFEFF/, "").split(/\r?\n/, 1)[0] || "";
   const counts = [["\t", (firstLine.match(/\t/g) || []).length], [";", (firstLine.match(/;/g) || []).length], [",", (firstLine.match(/,/g) || []).length]];
@@ -269,9 +269,19 @@ function matrixToDataset(matrix) {
   if (rawHeaders.length > MAX_COLUMNS) throw new Error(`Šajā prototipā atbalstām ne vairāk kā ${MAX_COLUMNS} kolonnas.`);
   const headers = makeUniqueHeaders(rawHeaders);
   const rows = matrix.slice(1, MAX_ROWS + 1).map((values) =>
-    Object.fromEntries(headers.map((header, index) => [header, String(values[index] ?? "").trim()])),
+    Object.fromEntries(headers.map((header, index) => [header, cellValueToString(values[index])])),
   );
   return { headers, rows, truncated: matrix.length - 1 > MAX_ROWS };
+}
+
+function cellValueToString(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const pad = (number) => String(number).padStart(2, "0");
+    const date = `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+    const hasTime = value.getHours() || value.getMinutes() || value.getSeconds();
+    return hasTime ? `${date} ${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}` : date;
+  }
+  return String(value ?? "").trim();
 }
 
 function makeUniqueHeaders(headers) {
@@ -332,11 +342,36 @@ function inferType(column, values, uniqueCount) {
   if (years.length / values.length >= 0.8 || /gads|year/.test(name)) return "gads";
   const numbers = values.filter((value) => Number.isFinite(Number(value.replace(",", "."))));
   if (numbers.length / values.length >= 0.8) return "skaitlis";
-  const dates = values.filter((value) => /^\d{4}[-/.]\d{1,2}([-/ .]\d{1,2})?$/.test(value));
-  if (dates.length / values.length >= 0.8 || /datums|date/.test(name)) return "datums";
+  const dates = values.filter(isDateLike);
+  if (dates.length / values.length >= 0.8 || /datums|date|datetime|timestamp|published[_ ]?at|created[_ ]?at|updated[_ ]?at/.test(name)) return "datums";
   if (values.some((value) => /[;|]/.test(value))) return "vairākas vērtības";
   if (uniqueCount <= Math.max(5, values.length * 0.45)) return "kategorija";
   return "teksts";
+}
+
+function isDateLike(value) {
+  const normalized = String(value).trim().replace(/(\d{2,4})[.,]\s+(?=\d{1,2}:\d{2})/, "$1 ");
+  const timePattern = "(?:[ T]\\d{1,2}:\\d{2}(?::\\d{2}(?:[.,]\\d{1,6})?)?(?:\\s?(?:Z|UTC|[+-]\\d{2}:?\\d{2}|[AP]M))?)?";
+  const yearFirst = normalized.match(new RegExp(`^(\\d{4})[-/. ](\\d{1,2})(?:[-/. ](\\d{1,2}))?${timePattern}$`, "i"));
+  if (yearFirst) return isValidDateParts(Number(yearFirst[1]), Number(yearFirst[2]), yearFirst[3] ? Number(yearFirst[3]) : 1);
+
+  const dayFirst = normalized.match(new RegExp(`^(\\d{1,2})[-/. ](\\d{1,2})[-/. ](\\d{2}|\\d{4})${timePattern}$`, "i"));
+  if (dayFirst) {
+    const year = Number(dayFirst[3].length === 2 ? `20${dayFirst[3]}` : dayFirst[3]);
+    const first = Number(dayFirst[1]);
+    const second = Number(dayFirst[2]);
+    return isValidDateParts(year, second, first) || isValidDateParts(year, first, second);
+  }
+
+  const hasYear = /\b(?:1[5-9]\d{2}|20\d{2}|2100)\b/.test(normalized);
+  const hasMonthName = /janvār|februār|mart|aprīl|maij|jūnij|jūlij|august|septembr|oktobr|novembr|decembr|january|february|march|april|may|june|july|september|october|november|december/i.test(normalized);
+  return hasYear && hasMonthName;
+}
+
+function isValidDateParts(year, month, day) {
+  if (year < 1500 || year > 2100 || month < 1 || month > 12 || day < 1 || day > 31) return false;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
 function chooseInitialQuestion() {
