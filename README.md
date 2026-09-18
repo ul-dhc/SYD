@@ -28,7 +28,8 @@ The first browser-based prototype is implemented. It provides:
 - XLSX worksheet selection and editable column-type review;
 - automatic column type, missing-value, and uniqueness summaries;
 - guided selection between category, time, and record-exploration views;
-- a category-frequency view, a time-distribution view, and a record browser;
+- up to three data-aware SYD Library recommendations with explicit limitations;
+- category-frequency, place-frequency, time-distribution, category-comparison, and record-browser modules;
 - a synthetic demonstration dataset for trying the workflow.
 
 Imported research data stays in the browser and is not uploaded to SYD or sent to an LLM. The existing NSRD/Seque visualisation remains a separate project and will later become a SYD demonstration configuration.
@@ -52,7 +53,7 @@ The root `index.html` is intentionally dependency-free so the prototype can be h
 ## Initial development sequence
 
 1. Define the universal SYD dataset and project model.
-2. Define the SYD Library module manifest.
+2. Formalise the current SYD Library registry as a reusable module manifest.
 3. Adapt NSRD/Seque as the first example configuration.
 4. Validate the model with a second, structurally different humanities dataset.
 5. Expand guided CSV, TSV, and XLSX import and field mapping.

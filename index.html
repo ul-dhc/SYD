@@ -176,13 +176,24 @@
             </fieldset>
           </section>
 
+          <section class="analysis-section" id="recommendation-section" aria-labelledby="recommendation-title" hidden>
+            <div class="section-heading">
+              <div><span class="section-number">04</span><div><p class="eyebrow">SYD Library</p><h3 id="recommendation-title">Izvēlieties piemērotu skatu</h3></div></div>
+              <p>Katrs ieteikums ir balstīts izvēlētajā jautājumā un apstiprinātajā datu struktūrā.</p>
+            </div>
+            <fieldset class="recommendation-grid" id="visual-recommendations">
+              <legend class="visually-hidden">Izvēlieties vizualizācijas moduli</legend>
+            </fieldset>
+          </section>
+
           <section class="analysis-section visualisation-section" id="visualisation-section" aria-labelledby="visualisation-title" hidden>
             <div class="section-heading">
-              <div><span class="section-number">04</span><div><p class="eyebrow">SYD ieteikums</p><h3 id="visualisation-title">Kategoriju biežuma skats</h3></div></div>
+              <div><span class="section-number">05</span><div><p class="eyebrow">Izvēlētais skats</p><h3 id="visualisation-title">Kategoriju biežuma skats</h3></div></div>
               <p id="method-note">Piemērots, lai salīdzinātu vienas kolonnas vērtību biežumu.</p>
             </div>
             <div class="visual-controls" id="visual-controls">
               <label id="field-control"><span>Izmantotā kolonna</span><select id="field-select"></select></label>
+              <label id="second-field-control" hidden><span>Salīdzināmā kolonna</span><select id="second-field-select"></select></label>
               <label id="limit-control"><span>Parādīt</span><select id="limit-select"><option value="5">5 biežākās vērtības</option><option value="10" selected>10 biežākās vērtības</option><option value="20">20 biežākās vērtības</option></select></label>
             </div>
             <div class="visual-output" id="visual-output" aria-live="polite"></div>

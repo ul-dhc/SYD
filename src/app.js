@@ -1,3 +1,5 @@
+import { SYD_LIBRARY } from "./library.js";
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_ROWS = 10_000;
 const MAX_COLUMNS = 100;
@@ -13,7 +15,6 @@ const COLUMN_TYPES = [
   ["vairākas vērtības", "Vairākas vērtības"],
   ["tukšs", "Tukšs lauks"],
 ];
-
 window.lucide?.createIcons();
 
 const state = {
@@ -26,6 +27,8 @@ const state = {
   workbookName: "",
   sheetName: "",
   structureConfirmed: false,
+  moduleId: "",
+  recommendations: [],
 };
 
 const elements = {
@@ -44,11 +47,15 @@ const elements = {
   confirmStructure: document.querySelector("#confirm-structure"),
   questionSection: document.querySelector("#question-section"),
   questionOptions: document.querySelector("#question-options"),
+  recommendationSection: document.querySelector("#recommendation-section"),
+  visualRecommendations: document.querySelector("#visual-recommendations"),
   visualisationSection: document.querySelector("#visualisation-section"),
   visualTitle: document.querySelector("#visualisation-title"),
   methodNote: document.querySelector("#method-note"),
   fieldControl: document.querySelector("#field-control"),
   fieldSelect: document.querySelector("#field-select"),
+  secondFieldControl: document.querySelector("#second-field-control"),
+  secondFieldSelect: document.querySelector("#second-field-select"),
   limitControl: document.querySelector("#limit-control"),
   limitSelect: document.querySelector("#limit-select"),
   visualOutput: document.querySelector("#visual-output"),
@@ -65,9 +72,16 @@ elements.confirmStructure?.addEventListener("click", confirmStructure);
 elements.questionOptions?.addEventListener("change", (event) => {
   if (event.target.name !== "question") return;
   state.question = event.target.value;
+  state.moduleId = "";
+  configureRecommendations();
+});
+elements.visualRecommendations?.addEventListener("change", (event) => {
+  if (event.target.name !== "visual-module") return;
+  state.moduleId = event.target.value;
   configureVisualisation();
 });
 elements.fieldSelect?.addEventListener("change", renderVisualisation);
+elements.secondFieldSelect?.addEventListener("change", renderVisualisation);
 elements.limitSelect?.addEventListener("change", renderVisualisation);
 
 async function loadDemo() {
@@ -206,12 +220,15 @@ function openDataset(dataset, name, options = {}) {
   state.name = name;
   state.profiles = state.columns.map(profileColumn);
   state.structureConfirmed = false;
+  state.moduleId = "";
+  state.recommendations = [];
   elements.datasetName.textContent = name;
   elements.sheetControl.hidden = !state.workbook;
   if (state.workbook) elements.sheetSelect.value = state.sheetName;
   elements.sourceGrid.hidden = true;
   elements.analysis.hidden = false;
   elements.questionSection.hidden = true;
+  elements.recommendationSection.hidden = true;
   elements.visualisationSection.hidden = true;
   setActiveStep(1);
   renderOverview();
@@ -243,7 +260,7 @@ function inferType(column, values, uniqueCount) {
   const dates = values.filter((value) => /^\d{4}[-/.]\d{1,2}([-/ .]\d{1,2})?$/.test(value));
   if (dates.length / values.length >= 0.8 || /datums|date/.test(name)) return "datums";
   if (values.some((value) => /[;|]/.test(value))) return "vairākas vērtības";
-  if (uniqueCount <= Math.max(20, values.length * 0.45)) return "kategorija";
+  if (uniqueCount <= Math.max(5, values.length * 0.45)) return "kategorija";
   return "teksts";
 }
 
@@ -290,7 +307,7 @@ function updateColumnStructure(event) {
   state.structureConfirmed = false;
   updateStructureSummary();
   renderOverview();
-  if (!elements.questionSection.hidden) configureVisualisation();
+  if (!elements.questionSection.hidden) configureRecommendations();
 }
 
 function updateStructureSummary() {
@@ -313,8 +330,9 @@ function confirmStructure() {
   state.question = chooseInitialQuestion();
   document.querySelector(`input[name="question"][value="${state.question}"]`).checked = true;
   elements.questionSection.hidden = false;
+  elements.recommendationSection.hidden = false;
   elements.visualisationSection.hidden = false;
-  configureVisualisation();
+  configureRecommendations();
   setStatus("Datu struktūra apstiprināta. Tagad izvēlieties pētniecisko jautājumu.");
   elements.questionSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -323,49 +341,126 @@ function metricMarkup(value, label) {
   return `<div class="metric"><strong>${escapeHtml(String(value))}</strong><span>${label}</span></div>`;
 }
 
+function configureRecommendations() {
+  const includedProfiles = state.profiles.filter((profile) => profile.included);
+  state.recommendations = SYD_LIBRARY
+    .map((module) => matchLibraryModule(module, includedProfiles))
+    .filter(Boolean)
+    .sort((first, second) => second.score - first.score)
+    .slice(0, 3);
+
+  if (!state.recommendations.some((module) => module.id === state.moduleId)) {
+    state.moduleId = state.recommendations[0]?.id || "";
+  }
+
+  elements.visualRecommendations.innerHTML = state.recommendations.length
+    ? state.recommendations.map(recommendationMarkup).join("")
+    : `<div class="empty-state"><p>Apstiprinātajai datu struktūrai piemērots skats nav atrasts.</p></div>`;
+  configureVisualisation();
+}
+
+function matchLibraryModule(module, profiles) {
+  const fields = module.fieldTypes.length
+    ? profiles
+      .filter((profile) => module.fieldTypes.includes(profile.type))
+      .sort((first, second) => module.fieldTypes.indexOf(first.type) - module.fieldTypes.indexOf(second.type))
+    : profiles;
+  if (module.renderer === "comparison" && fields.length < 2) return null;
+  if (!fields.length) return null;
+  const fit = module.renderer === "records"
+    ? profiles.length === 1 ? "1 iekļauta kolonna" : `${profiles.length} iekļautas kolonnas`
+    : module.renderer === "comparison"
+      ? `${fields.length} salīdzināmas kolonnas`
+      : fields.length === 1 ? "1 piemērota kolonna" : `${fields.length} piemērotas kolonnas`;
+  return { ...module, fields, fit, score: module.scores[state.question] || 0 };
+}
+
+function recommendationMarkup(module, index) {
+  return `<label class="recommendation-card"><input type="radio" name="visual-module" value="${escapeHtml(module.id)}"${module.id === state.moduleId ? " checked" : ""}><span class="recommendation-rank">${index === 0 ? "SYD iesaka" : `Alternatīva ${index}`}</span><strong>${escapeHtml(module.title)}</strong><small>${escapeHtml(module.description)}</small><small class="recommendation-limit"><b>Ierobežojums:</b> ${escapeHtml(module.limitation)}</small><span class="recommendation-fit"><span>Atbilstība:</span> ${escapeHtml(module.fit)}</span></label>`;
+}
+
 function configureVisualisation() {
-  const config = getQuestionConfig();
+  const config = state.recommendations.find((module) => module.id === state.moduleId);
+  if (!config) {
+    elements.visualisationSection.hidden = true;
+    return;
+  }
+  elements.visualisationSection.hidden = false;
   elements.visualTitle.textContent = config.title;
   elements.methodNote.textContent = config.note;
   elements.interpretation.textContent = config.interpretation;
-  elements.fieldControl.hidden = config.fields.length === 0;
-  elements.limitControl.hidden = state.question === "records";
+  elements.fieldControl.hidden = config.renderer === "records";
+  elements.secondFieldControl.hidden = config.renderer !== "comparison";
+  elements.limitControl.hidden = ["records", "comparison"].includes(config.renderer);
   elements.fieldSelect.innerHTML = config.fields.map((profile) => `<option value="${escapeHtml(profile.name)}">${escapeHtml(profile.name)} · ${profile.type}</option>`).join("");
+  elements.secondFieldSelect.innerHTML = elements.fieldSelect.innerHTML;
+  if (config.renderer === "comparison" && config.fields.length > 1) {
+    elements.secondFieldSelect.value = config.fields[1].name;
+  }
   setActiveStep(2);
   renderVisualisation();
 }
 
-function getQuestionConfig() {
-  const includedProfiles = state.profiles.filter((profile) => profile.included);
-  if (state.question === "time") {
-    const fields = includedProfiles.filter((profile) => ["gads", "datums", "skaitlis"].includes(profile.type));
-    return { title: "Laika sadalījuma skats", note: fields.length ? "Piemērots, lai pamanītu koncentrāciju un pārtraukumus laikā." : "Šajā tabulā SYD neatrada drošu laika lauku.", interpretation: "Ierakstu skaits konkrētā periodā var atspoguļot gan vēsturisku aktivitāti, gan avotu saglabāšanos un datu vākšanas izvēles.", fields };
-  }
-  if (state.question === "records") return { title: "Ierakstu pārlūks", note: "Piemērots avota ierakstu pārbaudei pirms analīzes.", interpretation: "Tabulas priekšskatījums nemaina avota vērtības. Šajā prototipā tiek parādīti pirmie 50 ieraksti.", fields: [] };
-  const categoryPriority = { "kategorija": 0, "vieta": 1, "persona": 1, "vairākas vērtības": 2, "teksts": 3 };
-  const fields = includedProfiles
-    .filter((profile) => Object.hasOwn(categoryPriority, profile.type))
-    .sort((first, second) => categoryPriority[first.type] - categoryPriority[second.type]);
-  return { title: "Kategoriju biežuma skats", note: fields.length ? "Piemērots, lai salīdzinātu vienas kolonnas vērtību biežumu." : "Šajā tabulā SYD neatrada kategorisku lauku.", interpretation: "Biežums parāda ierakstu skaitu, nevis parādības nozīmīgumu. Tukšās vērtības tiek parādītas atsevišķi.", fields };
-}
-
 function renderVisualisation() {
-  if (state.question === "records") return renderRecords();
+  const config = state.recommendations.find((module) => module.id === state.moduleId);
+  if (!config) return;
+  if (config.renderer === "records") return renderRecords();
+  if (config.renderer === "comparison") return renderComparison();
   const field = elements.fieldSelect.value;
   if (!field) {
     elements.visualOutput.innerHTML = `<div class="empty-state"><p>Šim skatam vajadzīgā tipa kolonna nav atrasta.<br>Izvēlieties citu pētniecisko jautājumu.</p></div>`;
     return;
   }
   const counts = new Map();
+  const profile = state.profiles.find((item) => item.name === field);
   for (const row of state.rows) {
     const raw = String(row[field] ?? "").trim();
-    const values = state.question === "categories" && /[;|]/.test(raw) ? raw.split(/[;|]/).map((value) => value.trim()).filter(Boolean) : [raw || "Nav norādīts"];
+    const values = profile?.type === "vairākas vērtības" ? splitValues(raw) : [raw || "Nav norādīts"];
     for (const value of values) counts.set(value, (counts.get(value) || 0) + 1);
   }
   const limit = Number(elements.limitSelect.value);
-  const sorted = [...counts.entries()].sort((a, b) => state.question === "time" ? compareTimeValues(a[0], b[0]) : b[1] - a[1] || a[0].localeCompare(b[0], "lv")).slice(0, limit);
+  const sorted = [...counts.entries()].sort((a, b) => config.renderer === "time" ? compareTimeValues(a[0], b[0]) : b[1] - a[1] || a[0].localeCompare(b[0], "lv")).slice(0, limit);
   const max = Math.max(...sorted.map(([, count]) => count), 1);
   elements.visualOutput.innerHTML = sorted.length ? `<div class="bar-chart" role="img" aria-label="${escapeHtml(elements.visualTitle.textContent)} kolonnai ${escapeHtml(field)}">${sorted.map(([label, count]) => `<div class="bar-row"><span class="bar-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span><span class="bar-track" aria-hidden="true"><span class="bar-fill" style="width:${(count / max) * 100}%"></span></span><strong class="bar-value">${count}</strong></div>`).join("")}</div>` : `<div class="empty-state"><p>Šajā kolonnā nav attēlojamu vērtību.</p></div>`;
+}
+
+function splitValues(value) {
+  const values = value.split(/[;|]/).map((item) => item.trim()).filter(Boolean);
+  return values.length ? values : ["Nav norādīts"];
+}
+
+function renderComparison() {
+  const firstField = elements.fieldSelect.value;
+  const secondField = elements.secondFieldSelect.value;
+  if (!firstField || !secondField || firstField === secondField) {
+    elements.visualOutput.innerHTML = `<div class="empty-state"><p>Izvēlieties divas atšķirīgas kolonnas.</p></div>`;
+    return;
+  }
+  const firstProfile = state.profiles.find((profile) => profile.name === firstField);
+  const secondProfile = state.profiles.find((profile) => profile.name === secondField);
+  const pairs = new Map();
+  const firstCounts = new Map();
+  const secondCounts = new Map();
+
+  for (const row of state.rows) {
+    const firstRaw = String(row[firstField] ?? "").trim();
+    const secondRaw = String(row[secondField] ?? "").trim();
+    const firstValues = firstProfile?.type === "vairākas vērtības" ? splitValues(firstRaw) : [firstRaw || "Nav norādīts"];
+    const secondValues = secondProfile?.type === "vairākas vērtības" ? splitValues(secondRaw) : [secondRaw || "Nav norādīts"];
+    for (const firstValue of firstValues) {
+      firstCounts.set(firstValue, (firstCounts.get(firstValue) || 0) + 1);
+      for (const secondValue of secondValues) {
+        const key = `${firstValue}\u0000${secondValue}`;
+        pairs.set(key, (pairs.get(key) || 0) + 1);
+      }
+    }
+    for (const secondValue of secondValues) secondCounts.set(secondValue, (secondCounts.get(secondValue) || 0) + 1);
+  }
+
+  const firstValues = [...firstCounts].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([value]) => value);
+  const secondValues = [...secondCounts].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([value]) => value);
+  const max = Math.max(...firstValues.flatMap((firstValue) => secondValues.map((secondValue) => pairs.get(`${firstValue}\u0000${secondValue}`) || 0)), 1);
+  elements.visualOutput.innerHTML = `<div class="comparison-wrap"><table class="comparison-table"><caption class="visually-hidden">${escapeHtml(firstField)} un ${escapeHtml(secondField)} vērtību kombināciju biežums</caption><thead><tr><th scope="col">${escapeHtml(firstField)} / ${escapeHtml(secondField)}</th>${secondValues.map((value) => `<th scope="col">${escapeHtml(value)}</th>`).join("")}</tr></thead><tbody>${firstValues.map((firstValue) => `<tr><th scope="row">${escapeHtml(firstValue)}</th>${secondValues.map((secondValue) => { const count = pairs.get(`${firstValue}\u0000${secondValue}`) || 0; return `<td style="--intensity:${Math.round((count / max) * 70)}" title="${escapeHtml(`${firstValue} un ${secondValue}: ${count}`)}">${count || "–"}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 
 function compareTimeValues(first, second) {
@@ -380,9 +475,10 @@ function renderRecords() {
 }
 
 function resetWorkspace() {
-  Object.assign(state, { rows: [], columns: [], profiles: [], name: "", question: "categories", workbook: null, workbookName: "", sheetName: "", structureConfirmed: false });
+  Object.assign(state, { rows: [], columns: [], profiles: [], name: "", question: "categories", workbook: null, workbookName: "", sheetName: "", structureConfirmed: false, moduleId: "", recommendations: [] });
   elements.analysis.hidden = true;
   elements.questionSection.hidden = true;
+  elements.recommendationSection.hidden = true;
   elements.visualisationSection.hidden = true;
   elements.sheetControl.hidden = true;
   elements.sourceGrid.hidden = false;
