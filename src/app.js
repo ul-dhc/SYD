@@ -1,4 +1,5 @@
 import { SYD_LIBRARY } from "./library.js";
+import { renderInteractiveNetwork } from "./network.js";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_ROWS = 10_000;
@@ -460,34 +461,13 @@ function renderNetwork() {
       return { firstValue, secondValue, count };
     })
     .filter((link) => firstValues.has(link.firstValue) && secondValues.has(link.secondValue));
-  const height = Math.max(360, Math.max(firstEntries.length, secondEntries.length) * 54 + 76);
-  const yPosition = (index, total) => total === 1 ? height / 2 : 58 + (index * (height - 104)) / (total - 1);
-  const firstPositions = new Map(firstEntries.map(([value], index) => [value, yPosition(index, firstEntries.length)]));
-  const secondPositions = new Map(secondEntries.map(([value], index) => [value, yPosition(index, secondEntries.length)]));
-  const maxLink = Math.max(...links.map((link) => link.count), 1);
-  const maxNode = Math.max(...firstEntries.map(([, count]) => count), ...secondEntries.map(([, count]) => count), 1);
-  const edges = links.map((link) => {
-    const width = 1 + (link.count / maxLink) * 5;
-    const opacity = 0.25 + (link.count / maxLink) * 0.55;
-    const sharedRecords = link.count === 1 ? "1 kopīgs ieraksts" : `${link.count} kopīgi ieraksti`;
-    return `<line class="network-edge" x1="248" y1="${firstPositions.get(link.firstValue)}" x2="552" y2="${secondPositions.get(link.secondValue)}" stroke-width="${width}" opacity="${opacity}"><title>${escapeHtml(`${link.firstValue} un ${link.secondValue}: ${sharedRecords}`)}</title></line>`;
-  }).join("");
-  const firstNodes = firstEntries.map(([value, count]) => networkNodeMarkup(value, count, 240, firstPositions.get(value), "left", maxNode)).join("");
-  const secondNodes = secondEntries.map(([value, count]) => networkNodeMarkup(value, count, 560, secondPositions.get(value), "right", maxNode)).join("");
-  elements.visualOutput.innerHTML = `<div class="network-wrap"><svg class="network-svg" viewBox="0 0 800 ${height}" role="img" aria-label="Divdaļīgs tīkls starp kolonnām ${escapeHtml(firstField)} un ${escapeHtml(secondField)}"><text class="network-heading" x="240" y="22" text-anchor="end">${escapeHtml(firstField)}</text><text class="network-heading" x="560" y="22">${escapeHtml(secondField)}</text>${edges}${firstNodes}${secondNodes}</svg></div>`;
-}
-
-function networkNodeMarkup(value, count, x, y, side, maxNode) {
-  const radius = 6 + (count / maxNode) * 7;
-  const labelX = side === "left" ? x - radius - 8 : x + radius + 8;
-  const anchor = side === "left" ? "end" : "start";
-  const className = side === "left" ? "network-node-left" : "network-node-right";
-  const records = count === 1 ? "1 ieraksts" : `${count} ieraksti`;
-  return `<g><circle class="${className}" cx="${x}" cy="${y}" r="${radius}"><title>${escapeHtml(`${value}: ${records}`)}</title></circle><text class="network-label" x="${labelX}" y="${y + 4}" text-anchor="${anchor}">${escapeHtml(shortenLabel(value))}</text></g>`;
-}
-
-function shortenLabel(value) {
-  return value.length > 28 ? `${value.slice(0, 27)}…` : value;
+  renderInteractiveNetwork(elements.visualOutput, {
+    firstField,
+    secondField,
+    firstEntries,
+    secondEntries,
+    links,
+  });
 }
 
 function buildPairData() {
