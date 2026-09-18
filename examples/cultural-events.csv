@@ -1,16 +1,16 @@
-Nosaukums,Gads,Vieta,Kategorija,Institūcija,Nenoteiktība
-Dziesmu vakars,1919,Rīga,Mūzika,Tautas nams,precīzs
-Ceļojošā izstāde,1921,Jelgava,Izstāde,Pilsētas muzejs,aptuvens
-Rakstnieku lasījums,1921,Rīga,Lasījums,Biedrības nams,precīzs
-Amatierteātra izrāde,1923,Cēsis,Teātris,Viesīgā biedrība,precīzs
-Vasaras koncerts,1924,Liepāja,Mūzika,Kūrorta komiteja,precīzs
-Folkloras vakars,1924,Cēsis,"Mūzika; Lasījums",Viesīgā biedrība,aptuvens
-Mākslas darbu skate,1925,Rīga,Izstāde,Pilsētas muzejs,precīzs
-Vēsturiska lekcija,1925,Jelgava,Lasījums,Biedrības nams,nav zināms
-Koru svētki,1926,Liepāja,Mūzika,Kūrorta komiteja,precīzs
-Jaunās dzejas vakars,1927,Rīga,Lasījums,Biedrības nams,precīzs
-Reģionālā izstāde,1928,Cēsis,Izstāde,Pilsētas muzejs,aptuvens
-Brīvdabas izrāde,1928,Jelgava,Teātris,Viesīgā biedrība,precīzs
-Kamerkoncerts,1929,Rīga,Mūzika,Tautas nams,precīzs
-Grāmatu izstāde,1930,Liepāja,Izstāde,Pilsētas muzejs,precīzs
-Tautasdziesmu vakars,1930,Cēsis,"Mūzika; Lasījums",Tautas nams,nav zināms
+Nosaukums,Gads,Vieta,Kategorija,Institūcija,Statuss
+Dziesmu vakars,1919,Rīga,Mūzika,Tautas nams,Pabeigts
+Ceļojošā izstāde,1921,Jelgava,Izstāde,Pilsētas muzejs,Procesā
+Rakstnieku lasījums,1921,Rīga,Lasījums,Biedrības nams,Pabeigts
+Amatierteātra izrāde,1923,Cēsis,Teātris,Viesīgā biedrība,Pabeigts
+Vasaras koncerts,1924,Liepāja,Mūzika,Kūrorta komiteja,Nav sākts
+Folkloras vakars,1924,Cēsis,"Mūzika; Lasījums",Viesīgā biedrība,Procesā
+Mākslas darbu skate,1925,Rīga,Izstāde,Pilsētas muzejs,Pabeigts
+Vēsturiska lekcija,1925,Jelgava,Lasījums,Biedrības nams,Nav sākts
+Koru svētki,1926,Liepāja,Mūzika,Kūrorta komiteja,Pabeigts
+Jaunās dzejas vakars,1927,Rīga,Lasījums,Biedrības nams,Pabeigts
+Reģionālā izstāde,1928,Cēsis,Izstāde,Pilsētas muzejs,Procesā
+Brīvdabas izrāde,1928,Jelgava,Teātris,Viesīgā biedrība,Pabeigts
+Kamerkoncerts,1929,Rīga,Mūzika,Tautas nams,Pabeigts
+Grāmatu izstāde,1930,Liepāja,Izstāde,Pilsētas muzejs,Pabeigts
+Tautasdziesmu vakars,1930,Cēsis,"Mūzika; Lasījums",Tautas nams,Procesā

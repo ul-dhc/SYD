@@ -27,7 +27,7 @@ SYD Library piedāvā līdz trim datiem un jautājumam piemērotām vizualizāci
 
 Lokāli atvērts fails tiek apstrādāts jūsu pārlūkā. Tas netiek augšupielādēts SYD serverī un netiek nosūtīts lielajam valodas modelim. SYD nepārraksta oriģinālo failu un neaizpilda trūkstošās vērtības jūsu vietā.
 
-Humanitāro zinātņu datos nenoteiktība ne vienmēr ir kļūda. Aptuvens datums, vairāki vietvārda varianti vai atšķirīgi personas vārda pieraksti var būt pētnieciski nozīmīga informācija. Tāpēc SYD palīdz šādas atšķirības pamanīt, nevis automātiski izdzēst vai apvienot.
+Humanitāro zinātņu datos neskaidrība ne vienmēr ir kļūda. Aptuvens datums, vairāki vietvārda varianti vai atšķirīgi personas vārda pieraksti var būt pētnieciski nozīmīga informācija. Tāpēc SYD palīdz šādas atšķirības pamanīt, nevis automātiski izdzēst vai apvienot.
 
 ## Sarunu palīgs
 
