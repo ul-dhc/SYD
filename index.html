@@ -199,13 +199,47 @@
               <div><span class="section-number">05</span><div><p class="eyebrow">Izvēlētā vizualizācija</p><h3 id="visualisation-title">Kategoriju biežuma vizualizācija</h3></div></div>
               <p id="method-note">Piemērots, lai salīdzinātu vienas kolonnas vērtību biežumu.</p>
             </div>
-            <div class="visual-controls" id="visual-controls">
-              <label id="field-control"><span>Izmantotā kolonna</span><select id="field-select"></select></label>
-              <label id="second-field-control" hidden><span>Salīdzināmā kolonna</span><select id="second-field-select"></select></label>
-              <label id="limit-control"><span>Parādīt</span><select id="limit-select"><option value="5">5 biežākās vērtības</option><option value="10" selected>10 biežākās vērtības</option><option value="20">20 biežākās vērtības</option></select></label>
+            <div class="explorer-shell">
+              <details class="explorer-filter-panel" open>
+                <summary>
+                  <i data-lucide="list-filter" aria-hidden="true"></i>
+                  <span><strong>Filtri</strong><small id="filter-summary">Visi ieraksti</small></span>
+                  <i class="filter-chevron" data-lucide="chevron-down" aria-hidden="true"></i>
+                </summary>
+                <div class="filter-panel-body">
+                  <label class="filter-field search-filter-field">
+                    <span>Meklēt datos</span>
+                    <span class="filter-input-wrap"><i data-lucide="search" aria-hidden="true"></i><input id="data-search-filter" type="search" placeholder="Meklēt visās kolonnās" autocomplete="off" /></span>
+                  </label>
+                  <div class="generated-filters" id="generated-filters"></div>
+                  <button class="clear-filters-button" id="clear-visual-filters" type="button">
+                    <i data-lucide="filter-x" aria-hidden="true"></i>
+                    Notīrīt filtrus
+                  </button>
+                </div>
+              </details>
+              <div class="explorer-visual-panel">
+                <div class="visual-controls" id="visual-controls">
+                  <div class="chart-settings" id="chart-settings">
+                    <label><span>Stils</span><select id="chart-style-select"><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label>
+                    <label><span>Kustība</span><select id="chart-animation-select"><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label>
+                    <fieldset class="chart-palette-options">
+                      <legend>Palete</legend>
+                      <button type="button" data-chart-palette="archive" aria-label="Arhīvs" title="Arhīvs"><span><i style="--swatch:#114b94"></i><i style="--swatch:#c83f00"></i><i style="--swatch:#2b783f"></i><i style="--swatch:#cf0060"></i></span></button>
+                      <button type="button" data-chart-palette="neon" aria-label="Neons" title="Neons"><span><i style="--swatch:#1e90ff"></i><i style="--swatch:#00c96c"></i><i style="--swatch:#ff0099"></i><i style="--swatch:#b100ff"></i></span></button>
+                      <button type="button" data-chart-palette="autumn" aria-label="Dzintars" title="Dzintars"><span><i style="--swatch:#daa520"></i><i style="--swatch:#ff6f61"></i><i style="--swatch:#ff4500"></i><i style="--swatch:#9b6f35"></i></span></button>
+                      <button type="button" data-chart-palette="pastel" aria-label="Pastelis" title="Pastelis"><span><i style="--swatch:#86c7cc"></i><i style="--swatch:#ffc1cc"></i><i style="--swatch:#b39cd0"></i><i style="--swatch:#d49abd"></i></span></button>
+                      <button type="button" data-chart-palette="vivid" aria-label="Košums" title="Košums"><span><i style="--swatch:#673ab7"></i><i style="--swatch:#ff5722"></i><i style="--swatch:#e6c900"></i><i style="--swatch:#b51d84"></i></span></button>
+                    </fieldset>
+                  </div>
+                  <label id="field-control"><span>Izmantotā kolonna</span><select id="field-select"></select></label>
+                  <label id="second-field-control" hidden><span>Salīdzināmā kolonna</span><select id="second-field-select"></select></label>
+                  <label id="limit-control"><span>Parādīt</span><select id="limit-select"><option value="5">5 biežākās vērtības</option><option value="10" selected>10 biežākās vērtības</option><option value="20">20 biežākās vērtības</option></select></label>
+                </div>
+                <div class="visual-output" id="visual-output" aria-live="polite"></div>
+                <aside class="interpretation" id="interpretation"><strong>Interpretācijas piezīme</strong><p>Biežums parāda ierakstu skaitu, nevis parādības nozīmīgumu.</p></aside>
+              </div>
             </div>
-            <div class="visual-output" id="visual-output" aria-live="polite"></div>
-            <aside class="interpretation" id="interpretation"><strong>Interpretācijas piezīme</strong><p>Biežums parāda ierakstu skaitu, nevis parādības nozīmīgumu.</p></aside>
           </section>
         </div>
       </section>

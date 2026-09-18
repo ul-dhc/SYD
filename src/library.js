@@ -1,5 +1,16 @@
 export const SYD_LIBRARY = [
   {
+    id: "data-overview",
+    title: "Datu pārskats",
+    description: "Apvieno vairākas savstarpēji saistītas vizualizācijas vienā pārskatā.",
+    limitation: "Pārskats izceļ biežākās vērtības, tāpēc retākie ieraksti var nebūt uzreiz redzami.",
+    note: "Pārskats ar kopīgiem filtriem un savstarpēji saistītām vizualizācijām.",
+    interpretation: "Vizualizācijas rāda datu kopas struktūru un biežumu. Atlase vienā diagrammā filtrē visu pārskatu, bet biežums pats par sevi neparāda parādības nozīmīgumu.",
+    renderer: "overview",
+    fieldTypes: [],
+    scores: { categories: 110, time: 92, relationships: 88, records: 75 },
+  },
+  {
     id: "category-frequency",
     title: "Kategoriju biežums",
     description: "Parāda, kuras vērtības izvēlētajā kolonnā sastopamas biežāk.",

@@ -29,6 +29,7 @@ The first browser-based prototype is implemented. It provides:
 - automatic column type, missing-value, and uniqueness summaries;
 - guided selection between category, time, and record-exploration views;
 - up to three data-aware SYD Library recommendations with explicit limitations;
+- an NSRD-derived visual exploration shell with shared filters and a coordinated data overview;
 - category-frequency, place-frequency, time-distribution, category-comparison, interactive-network, and record-browser modules;
 - an NSRD-derived network interaction system with five palettes, two rendering styles, four movement modes, node selection, dragging, panning, zooming, and label controls;
 - a synthetic demonstration dataset for trying the workflow.
