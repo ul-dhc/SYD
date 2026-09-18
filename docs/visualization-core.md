@@ -92,3 +92,15 @@ Pārlūkā pārbaudīti 360, 480, 820 un 1280 px platumi. Visos platumos dokumen
 Kopparādīšanās aprēķins atrodas `createCooccurrenceData()` datu kodolā. Tas saņem ģenerisku lomas identifikatoru, tāpēc nav piesaistīts personām vai kādam konkrētam datu kopas laukam.
 
 Pārbaudīts, ka matricas pāra atlase pāriet uz tīklu un detaļu paneli, bet kopīgais filtrs pārrēķina visas pārskata diagrammas. Datora matrica un mobilais pāru saraksts pārbaudīts 360, 480, 820 un 1280 px platumā bez horizontālas lapas pārplūdes.
+
+## Izolētais vizualizāciju CSS slānis
+
+6. solī no datu sagatavošanas darbplūsmas nodalīti visi no NSRD pārņemtie vizualizāciju stili:
+
+- `workspace.css` satur tikai datu sagatavošanas, kolonnu pārbaudes, jautājuma izvēles un rekomendāciju noformējumu;
+- `visualization.css` ir vienīgais HTML pieslēgtais vizualizāciju CSS ieejas fails;
+- tas sākotnējā kaskādes secībā ielādē darbvietas sistēmas moduli `visualization-system.css` un tīkla renderēšanas moduli `network.css`;
+- vizualizāciju ietvars, filtri, detaļas, vadīklas, analītiskais pārskats un responsīvās atvilktnes atrodas vienā izolētā slānī;
+- turpmākie SYD zīmola pielāgojumi var tikt pievienoti pēc kopīgās sistēmas, nemainot datu darbplūsmas stilus.
+
+Šis sadalījums saglabā līdzšinējo CSS secību, tāpēc tīkla un pārskata vizuālais rezultāts nemainās. Vienlaikus tas novērš situāciju, kurā NSRD sistēmas noteikumi ir sajaukti ar SYD datu sagatavošanas lapas noteikumiem.
