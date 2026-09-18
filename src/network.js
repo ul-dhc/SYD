@@ -417,7 +417,7 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
     const startNode = reverse ? target : source;
     const endNode = reverse ? source : target;
     const endpoints = lineEndpoints(startNode, endNode, nodeRadius(startNode, sharedState.layout), nodeRadius(endNode, sharedState.layout));
-    const baseWidth = active ? Math.min(1.65, 0.45 + Math.sqrt(edge.weight) * 0.32) : 0.48;
+    const baseWidth = active ? Math.min(1.65, 0.45 + Math.sqrt(edge.weight) * 0.32) : 0.62;
     const showFlow = sharedState.animation === "rain" || selected.size === 0 || active;
     const line = `x1="${endpoints.start.x}" y1="${endpoints.start.y}" x2="${endpoints.end.x}" y2="${endpoints.end.y}"`;
     return `<g data-edge-index="${index}" data-source="${escapeHtml(edge.source)}" data-target="${escapeHtml(edge.target)}" class="edge-${threadType}${active ? " is-active" : ""}"><line class="network-edge-base" ${line} style="stroke-width:${baseWidth};--wave-delay:${-(((startNode.x + endNode.x) / 2) / WIDTH) * 4.8}s"></line>${sharedState.style === "pencil" ? `<line class="network-edge-pencil" ${line} style="stroke-width:${baseWidth}"></line>` : ""}${sharedState.layout !== "force" && showFlow ? `<line class="network-edge-flow" ${line} pathLength="100" style="stroke-width:${active ? Math.min(1.9, baseWidth + 0.25) : 0.72};--rain-duration:${4.4 + (index % 5) * 0.32}s;--rain-delay:${-(index % 9) * 0.43}s"></line>` : ""}</g>`;

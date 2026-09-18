@@ -158,13 +158,14 @@
 .network-edges g.edge-institution { --thread-color: var(--node-institution); }
 .network-edge-base {
   fill: none;
-  stroke: color-mix(in srgb, var(--foreground) 22%, transparent);
+  stroke: color-mix(in srgb, var(--foreground) 38%, transparent);
   stroke-linecap: round;
-  opacity: .3;
+  opacity: .48;
+  vector-effect: non-scaling-stroke;
   transition: opacity .2s, stroke .2s;
 }
 
-.syd-network-svg.is-structured .network-edge-base { stroke: color-mix(in srgb, var(--thread-color) 46%, transparent); opacity: .1; }
+.syd-network-svg.is-structured .network-edge-base { stroke: color-mix(in srgb, var(--thread-color) 54%, transparent); opacity: .28; }
 .network-edges g.is-active .network-edge-base { stroke: color-mix(in srgb, var(--thread-color) 78%, var(--foreground)); opacity: .78; }
 .syd-network-svg.is-structured .network-edges g.is-active .network-edge-base { stroke: color-mix(in srgb, var(--thread-color) 84%, var(--foreground)); opacity: .72; }
 .syd-network-svg.has-selection .network-edges g:not(.is-active) .network-edge-base { stroke: color-mix(in srgb, var(--foreground) 40%, transparent); opacity: .2; }

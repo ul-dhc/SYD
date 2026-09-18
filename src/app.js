@@ -1,5 +1,5 @@
 import { SYD_LIBRARY } from "./library.js";
-import { renderInteractiveNetwork } from "./network.js?v=14";
+import { renderInteractiveNetwork } from "./network.js?v=15";
 import { CHART_SWATCH_KEYS, visualizationPalette } from "./visualization-palettes.js?v=1";
 import {
   createBipartiteGraph,
