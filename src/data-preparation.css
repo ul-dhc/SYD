@@ -108,9 +108,24 @@
 }
 
 .preparation-caution h2,
+.sample-dataset h2,
 .preparation-action h2 {
   max-width: 760px;
   font-size: clamp(2.25rem, 4.5vw, 4.2rem);
+}
+
+.sample-dataset {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.85fr);
+  gap: clamp(40px, 8vw, 110px);
+  padding: clamp(58px, 8vw, 94px) 0;
+  border-top: 1px solid var(--ink);
+}
+
+.sample-dataset-details > p {
+  margin: 0 0 24px;
+  color: var(--muted);
+  line-height: 1.7;
 }
 
 .preparation-action {
@@ -124,7 +139,8 @@
 
 @media (max-width: 900px) {
   .preparation-hero,
-  .preparation-caution {
+  .preparation-caution,
+  .sample-dataset {
     grid-template-columns: 1fr;
   }
 

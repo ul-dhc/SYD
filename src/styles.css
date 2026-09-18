@@ -308,6 +308,27 @@ h2 {
   line-height: 1.55;
 }
 
+.sample-download-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-underline-offset: 4px;
+}
+
+.sample-download-link:hover,
+.sample-download-link:focus-visible {
+  color: var(--ink);
+}
+
+.sample-download-link svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.8;
+}
+
 .card-heading-row {
   display: flex;
   gap: 10px;
