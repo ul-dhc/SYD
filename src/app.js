@@ -1,5 +1,5 @@
 import { SYD_LIBRARY } from "./library.js";
-import { renderInteractiveNetwork } from "./network.js";
+import { renderInteractiveNetwork } from "./network.js?v=7";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_ROWS = 10_000;
@@ -722,6 +722,7 @@ function syncVisualisationFocus() {
 function renderVisualisation() {
   const config = state.recommendations.find((module) => module.id === state.moduleId);
   if (!config) return;
+  elements.visualOutput.classList.toggle("network-output", config.renderer === "network");
   const rows = getFilteredRows();
   updateFilterSummary(rows);
   if (config.renderer === "overview") return renderDataOverview(rows);
@@ -774,27 +775,27 @@ function renderDataOverview(rows) {
   const columnCounts = columnProfile ? fieldCounts(rows, columnProfile, ["gads", "datums"].includes(columnProfile.type)).slice(0, 12) : [];
   const columnMax = Math.max(1, ...columnCounts.map(([, count]) => count));
 
-  elements.visualOutput.innerHTML = `<div class="nsrd-overview">
-    <div class="overview-summary" aria-label="Datu pārskata kopsavilkums">
+  elements.visualOutput.innerHTML = `<div class="nsrd-overview analytics-surface animation-${escapeHtml(state.chartAnimation)} style-${escapeHtml(state.chartStyle)}">
+    <div class="overview-summary analytics-summary" aria-label="Datu pārskata kopsavilkums">
       <div><strong>${rows.length.toLocaleString("lv-LV")}</strong><span>ieraksti</span></div>
       <div><strong>${uniqueEntities.toLocaleString("lv-LV")}</strong><span>${escapeHtml(donutProfile?.name || "vērtības")}</span></div>
       <div><strong>${activeFilters}</strong><span>aktīvi filtri</span></div>
     </div>
-    <div class="overview-grid">
-      <section class="overview-chart overview-donut-chart">
+    <div class="overview-grid analytics-grid">
+      <section class="overview-chart analytics-chart overview-donut-chart">
         <h4>${escapeHtml(donutProfile ? `${donutProfile.name} · sadalījums` : "Vērtību sadalījums")}</h4>
         ${donutCounts.length ? `<div class="donut-layout"><div class="overview-donut" style="--donut:${donutStops}"><div><strong>${donutTotal}</strong><span>vērtības</span></div></div><div class="donut-legend">${donutCounts.map(([label, count], index) => `<button type="button" data-filter-field="${escapeHtml(donutProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${state.filters.get(donutProfile.name) === label}"><i style="--legend-color:${colors[index % colors.length]}"></i><span>${escapeHtml(label)}</span><strong>${count}</strong></button>`).join("")}</div></div>` : `<p class="chart-empty">Nav piemērotas kategoriskas kolonnas.</p>`}
       </section>
-      <section class="overview-chart overview-bars-chart">
+      <section class="overview-chart analytics-chart overview-bars-chart">
         <h4>${escapeHtml(barsProfile ? `${barsProfile.name} · biežākās vērtības` : "Biežākās vērtības")}</h4>
-        ${barCounts.length ? `<div class="overview-bars">${barCounts.map(([label, count], index) => `<button type="button" data-filter-field="${escapeHtml(barsProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${state.filters.get(barsProfile.name) === label}" style="--bar-size:${count / barMax * 100}%;--chart-color:${colors[index % colors.length]}"><span>${escapeHtml(label)}</span><i><b></b></i><strong>${count}</strong></button>`).join("")}</div>` : `<p class="chart-empty">Nav otras salīdzināmas kolonnas.</p>`}
+        ${barCounts.length ? `<div class="overview-bars analytics-bars">${barCounts.map(([label, count], index) => `<button class="analytics-bar" type="button" data-filter-field="${escapeHtml(barsProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${state.filters.get(barsProfile.name) === label}" style="--bar-size:${count / barMax * 100}%;--chart-color:${colors[index % colors.length]}"><span>${escapeHtml(label)}</span><i><b></b></i><strong>${count}</strong></button>`).join("")}</div>` : `<p class="chart-empty">Nav otras salīdzināmas kolonnas.</p>`}
       </section>
-      <section class="overview-chart overview-columns-chart">
+      <section class="overview-chart analytics-chart artifact-chart overview-columns-chart">
         <h4>${escapeHtml(columnProfile ? `${columnProfile.name} · sadalījums` : "Ierakstu sadalījums")}</h4>
-        ${columnCounts.length ? `<div class="overview-columns">${columnCounts.map(([label, count], index) => `<button type="button" data-filter-field="${escapeHtml(columnProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${state.filters.get(columnProfile.name) === label}" style="--bar-size:${Math.max(4, count / columnMax * 100)}%;--chart-color:${colors[index % colors.length]}"><strong>${count}</strong><i><b></b></i><span>${escapeHtml(label)}</span></button>`).join("")}</div>` : `<p class="chart-empty">Nav piemērotas laika vai kategoriskas kolonnas.</p>`}
+        ${columnCounts.length ? `<div class="overview-columns artifact-columns">${columnCounts.map(([label, count], index) => `<button class="artifact-column" type="button" data-filter-field="${escapeHtml(columnProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${state.filters.get(columnProfile.name) === label}" style="--bar-size:${Math.max(4, count / columnMax * 100)}%;--chart-color:${colors[index % colors.length]}"><strong>${count}</strong><i><b></b></i><span>${escapeHtml(label)}</span></button>`).join("")}</div>` : `<p class="chart-empty">Nav piemērotas laika vai kategoriskas kolonnas.</p>`}
       </section>
     </div>
-    <div class="overview-footer"><strong>${rows.length.toLocaleString("lv-LV")} ieraksti</strong><span>Klikšķiniet uz diagrammas elementa, lai filtrētu visu pārskatu.</span>${activeFilters ? `<button type="button" data-clear-dashboard-filters>Notīrīt atlasi</button>` : ""}</div>
+    <div class="overview-footer analytics-footer"><strong>${rows.length.toLocaleString("lv-LV")} ieraksti</strong><span>Klikšķiniet uz diagrammas elementa, lai filtrētu visu pārskatu.</span>${activeFilters ? `<button type="button" data-clear-dashboard-filters>Notīrīt atlasi</button>` : ""}</div>
   </div>`;
   elements.visualOutput.querySelector("[data-clear-dashboard-filters]")?.addEventListener("click", clearVisualFilters);
 }

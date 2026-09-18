@@ -1,6 +1,6 @@
 const WIDTH = 900;
 const HEIGHT = 570;
-const STORAGE_KEY = "syd-network-preferences";
+const STORAGE_KEY = "syd-network-preferences-v2";
 
 const PALETTES = {
   archive: { label: "Arhīvs", colors: ["#114b94", "#c83f00", "#2b783f", "#cf0060", "#02a49f"] },
@@ -18,7 +18,8 @@ export function renderInteractiveNetwork(container, data) {
     palette: preferences.palette || "archive",
     style: preferences.style || "standard",
     animation: preferences.animation || "none",
-    labelMode: preferences.labelMode || "all",
+    labelMode: preferences.labelMode || "active",
+    graphLabelScale: preferences.graphLabelScale || 1,
     zoom: 1,
     pan: { x: 0, y: 0 },
     selected: new Set(),
@@ -139,6 +140,12 @@ export function renderInteractiveNetwork(container, data) {
       savePreferences(state);
       announce(`Nosaukumi: ${{ all: "visi", active: "atlasītie", none: "paslēpti" }[state.labelMode]}.`);
     }
+    if (action === "label-size") {
+      const sizes = [0.85, 1, 1.2];
+      state.graphLabelScale = sizes[(sizes.indexOf(state.graphLabelScale) + 1) % sizes.length];
+      savePreferences(state);
+      announce(`Nosaukumu izmērs: ${Math.round(state.graphLabelScale * 100)}%.`);
+    }
     if (action === "reset") {
       state.zoom = 1;
       state.pan = { x: 0, y: 0 };
@@ -166,6 +173,8 @@ export function renderInteractiveNetwork(container, data) {
     root.dataset.palette = state.palette;
     root.dataset.style = state.style;
     root.dataset.animation = state.animation;
+    svg.className.baseVal = ["syd-network-svg", "network-canvas", state.layout === "free" ? "" : "is-structured", state.layout === "bipartite" ? "is-bipartite" : "", state.selected.size ? "has-selection" : "", `animation-${state.animation}`, `style-${state.style}`].filter(Boolean).join(" ");
+    svg.style.setProperty("--graph-label-scale", state.graphLabelScale);
     root.style.setProperty("--node-a", PALETTES[state.palette].colors[0]);
     root.style.setProperty("--node-b", PALETTES[state.palette].colors[1]);
     root.querySelectorAll(".syd-palette[data-palette]").forEach((button) => {
@@ -173,6 +182,10 @@ export function renderInteractiveNetwork(container, data) {
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", String(active));
     });
+    const labelButton = root.querySelector('[data-network-action="labels"]');
+    labelButton.className = `label-mode-button is-${state.labelMode}`;
+    labelButton.setAttribute("aria-pressed", String(state.labelMode !== "none"));
+    root.querySelector(".syd-network-tools output").textContent = `${Math.round(state.zoom * 100)}%`;
     renderGraph();
     renderInspector();
   }
@@ -194,18 +207,20 @@ export function renderInteractiveNetwork(container, data) {
     const curve = Math.max(35, Math.abs(to.x - from.x) * 0.42);
     const direction = to.x >= from.x ? 1 : -1;
     const path = `M ${from.x} ${from.y} C ${from.x + curve * direction} ${from.y}, ${to.x - curve * direction} ${to.y}, ${to.x} ${to.y}`;
-    const active = !hasSelection || state.selected.has(edge.from) || state.selected.has(edge.to);
+    const active = hasSelection && (state.selected.has(edge.from) || state.selected.has(edge.to));
     const dimmed = hasSelection && !active;
     const edgeSide = state.selected.has(edge.to) ? "b" : "a";
-    const width = 1.2 + (edge.count / maxEdge) * 4.8;
+    const width = Math.min(1.65, 0.45 + Math.sqrt(edge.count) * 0.32);
     const records = edge.count === 1 ? "1 kopīgs ieraksts" : `${edge.count} kopīgi ieraksti`;
-    const classes = `syd-network-edge edge-${edgeSide}${active ? " is-active" : ""}${dimmed ? " is-dimmed" : ""}`;
-    return `<g class="syd-network-edge-set"><path class="${classes}" data-edge-index="${index}" data-from="${escapeHtml(edge.from)}" data-to="${escapeHtml(edge.to)}" d="${path}" style="--edge-width:${width}"><title>${escapeHtml(`${edge.fromLabel} un ${edge.toLabel}: ${records}`)}</title></path><path class="syd-network-edge-flow ${classes}" d="${path}" style="--edge-width:${width};--delay:${(index % 8) * -0.18}s" aria-hidden="true"></path></g>`;
+    const classes = `${active ? " is-active" : ""}${dimmed ? " is-dimmed" : ""}`;
+    return `<g class="syd-network-edge-set edge-artifact${classes}"><path class="syd-network-edge network-edge-base edge-${edgeSide}" data-edge-index="${index}" data-from="${escapeHtml(edge.from)}" data-to="${escapeHtml(edge.to)}" d="${path}" style="stroke-width:${width};--wave-delay:${-(index % 8) * .18}s"><title>${escapeHtml(`${edge.fromLabel} un ${edge.toLabel}: ${records}`)}</title></path>${state.style === "pencil" ? `<path class="network-edge-pencil" d="${path}" style="stroke-width:${width}" aria-hidden="true"></path>` : ""}<path class="syd-network-edge-flow network-edge-flow" d="${path}" pathLength="100" style="stroke-width:${Math.min(1.9, width + .25)};--rain-duration:${4.4 + (index % 5) * .32}s;--rain-delay:${-(index % 9) * .43}s" aria-hidden="true"></path></g>`;
   }
 
   function nodeMarkup(node, maxNode, hasSelection, related) {
     const position = state.positions.get(node.id);
-    const radius = 8 + (node.count / maxNode) * 9;
+    const radius = state.layout === "free"
+      ? Math.min(27, 6 + Math.sqrt(node.count) * 2.2)
+      : Math.min(15, 3.5 + Math.sqrt(node.count) * 1.45);
     const selected = state.selected.has(node.id);
     const connected = related.has(node.id);
     const dimmed = hasSelection && !selected && !connected;
@@ -214,11 +229,12 @@ export function renderInteractiveNetwork(container, data) {
     const labelX = node.side === "first" ? -radius - 9 : radius + 9;
     const anchor = node.side === "first" ? "end" : "start";
     const shape = node.side === "first"
-      ? `<circle class="syd-network-node-shape" r="${radius}"></circle>`
-      : `<rect class="syd-network-node-shape" x="${-radius * 0.76}" y="${-radius * 0.76}" width="${radius * 1.52}" height="${radius * 1.52}" rx="2" transform="rotate(45)"></rect>`;
-    const outline = state.style === "pencil" ? shape.replace("syd-network-node-shape", "syd-network-node-outline") : "";
+      ? `<circle class="syd-network-node-shape node-shape" r="${radius}"></circle>`
+      : `<polygon class="syd-network-node-shape node-shape" points="0,${-radius} ${radius},0 0,${radius} ${-radius},0"></polygon>`;
+    const outline = state.style === "pencil" ? shape.replace("syd-network-node-shape node-shape", "syd-network-node-outline pencil-node-outline") : "";
     const records = node.count === 1 ? "1 ieraksts" : `${node.count} ieraksti`;
-    return `<g class="syd-network-node node-${side}${selected ? " is-selected" : ""}${connected ? " is-connected" : ""}${dimmed ? " is-dimmed" : ""}" data-node-id="${escapeHtml(node.id)}" transform="translate(${position.x} ${position.y})" tabindex="0" role="button" aria-pressed="${selected}" aria-label="${escapeHtml(`${node.label}: ${records}`)}">${shape}${outline}${showLabel ? `<text class="syd-network-label" x="${labelX}" y="4" text-anchor="${anchor}">${escapeHtml(shorten(node.label))}</text>` : ""}<title>${escapeHtml(`${node.label}: ${records}`)}</title></g>`;
+    const emphasis = hasSelection ? (selected || connected ? " is-active" : " is-dimmed") : " is-ambient";
+    return `<g class="syd-network-node graph-node ${side === "a" ? "person" : "artifact"} node-${side}${selected ? " is-selected" : ""}${connected ? " is-connected" : ""}${emphasis}" data-node-id="${escapeHtml(node.id)}" transform="translate(${position.x} ${position.y})" tabindex="0" role="button" aria-pressed="${selected}" aria-label="${escapeHtml(`${node.label}: ${records}`)}">${shape}${outline}${showLabel ? `<text class="syd-network-label" x="${labelX}" y="4" text-anchor="${anchor}">${escapeHtml(shorten(node.label))}</text>` : ""}<title>${escapeHtml(`${node.label}: ${records}`)}</title></g>`;
   }
 
   function renderInspector() {
@@ -300,20 +316,27 @@ function relatedIds(graph, selected) {
 function shellMarkup(data) {
   const paletteButtons = Object.entries(PALETTES).map(([id, palette]) => `<button class="syd-palette" type="button" data-palette="${id}" aria-label="Palete ${palette.label}" title="${palette.label}"><span>${palette.colors.map((color) => `<i style="--swatch:${color}"></i>`).join("")}</span></button>`).join("");
   return `<section class="syd-network" data-palette="archive" data-style="standard" data-animation="none">
-    <div class="syd-network-toolbar" aria-label="Tīkla iestatījumi">
-      <label><span>Izkārtojums</span><select data-network-layout><option value="bipartite">Divdaļīgs</option><option value="hierarchical">Hierarhisks</option><option value="free">Brīvais</option></select></label>
-      <label><span>Stils</span><select data-network-style><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label>
-      <label><span>Kustība</span><select data-network-animation><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label>
-      <fieldset class="syd-network-palettes"><legend>Palete</legend><div>${paletteButtons}</div></fieldset>
-      <div class="syd-network-tools" aria-label="Tīkla darbības">
+    <div class="syd-network-toolbar network-toolbar network-toolbar-secondary" aria-label="Tīkla iestatījumi">
+      <div class="syd-network-toolbar-tools toolbar-tools">
+        <div class="syd-network-view-options network-view-options">
+          <label class="syd-network-select network-select"><span>Izkārtojums</span><select data-network-layout><option value="bipartite">Divdaļīgs</option><option value="hierarchical">Hierarhisks</option><option value="free">Brīvais</option></select></label>
+          <label class="syd-network-select network-select"><span>Stils</span><select data-network-style><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label>
+          <label class="syd-network-select network-select"><span>Kustība</span><select data-network-animation><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label>
+          <fieldset class="syd-network-palettes"><legend>Palete</legend><div>${paletteButtons}</div></fieldset>
+        </div>
+        <div class="syd-network-tools network-controls" aria-label="Tīkla darbības">
+        <button type="button" data-network-action="labels" class="label-mode-button" aria-label="Mainīt nosaukumu režīmu" title="Mainīt nosaukumu režīmu"><i data-lucide="eye"></i></button>
+        <button type="button" data-network-action="label-size" class="graph-text-size-button" aria-label="Mainīt nosaukumu izmēru" title="Mainīt nosaukumu izmēru">A+</button>
         <button type="button" data-network-action="zoom-out" aria-label="Attālināt" title="Attālināt"><i data-lucide="zoom-out"></i></button>
-        <button type="button" data-network-action="reset" aria-label="Atjaunot novietojumu" title="Atjaunot novietojumu"><i data-lucide="rotate-ccw"></i></button>
+        <output aria-label="Mērogs">100%</output>
         <button type="button" data-network-action="zoom-in" aria-label="Pietuvināt" title="Pietuvināt"><i data-lucide="zoom-in"></i></button>
-        <button type="button" data-network-action="labels" aria-label="Mainīt nosaukumu režīmu" title="Mainīt nosaukumu režīmu"><i data-lucide="tags"></i></button>
+        <button type="button" data-network-action="reset" aria-label="Atjaunot novietojumu" title="Atjaunot novietojumu"><i data-lucide="rotate-ccw"></i></button>
+        </div>
       </div>
+      <div class="syd-network-legend legend" aria-label="Leģenda"><span><i class="node-swatch person"></i>${escapeHtml(data.firstField)}</span><span><i class="node-swatch artifact"></i>${escapeHtml(data.secondField)}</span></div>
     </div>
-    <div class="syd-network-canvas">
-      <svg class="syd-network-svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="Saikņu tīkls starp kolonnām ${escapeHtml(data.firstField)} un ${escapeHtml(data.secondField)}"><g class="syd-network-graph"></g></svg>
+    <div class="syd-network-canvas network-stage">
+      <svg class="syd-network-svg network-canvas is-structured is-bipartite animation-none style-standard" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="Saikņu tīkls starp kolonnām ${escapeHtml(data.firstField)} un ${escapeHtml(data.secondField)}"><rect class="network-hit-area" width="${WIDTH}" height="${HEIGHT}"></rect><g class="syd-network-graph"></g></svg>
     </div>
     <div class="syd-network-inspector" aria-live="polite"></div>
     <p class="visually-hidden syd-network-status" aria-live="polite"></p>
@@ -334,7 +357,7 @@ function readPreferences() {
 
 function savePreferences(state) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ layout: state.layout, palette: state.palette, style: state.style, animation: state.animation, labelMode: state.labelMode }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ layout: state.layout, palette: state.palette, style: state.style, animation: state.animation, labelMode: state.labelMode, graphLabelScale: state.graphLabelScale }));
   } catch { /* Storage may be unavailable in a private browser context. */ }
 }
 
