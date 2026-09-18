@@ -4,6 +4,7 @@ import { renderInteractiveNetwork } from "./network.js";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_ROWS = 10_000;
 const MAX_COLUMNS = 100;
+const ALL_XLSX_SHEETS = "__all__";
 const COLUMN_TYPES = [
   ["teksts", "Teksts"],
   ["kategorija", "Kategorija"],
@@ -67,7 +68,7 @@ const elements = {
 elements.demoButton?.addEventListener("click", loadDemo);
 elements.fileInput?.addEventListener("change", loadFile);
 elements.changeData?.addEventListener("click", resetWorkspace);
-elements.sheetSelect?.addEventListener("change", () => openXlsxSheet(elements.sheetSelect.value));
+elements.sheetSelect?.addEventListener("change", () => openXlsxSelection(elements.sheetSelect.value));
 elements.columnProfile?.addEventListener("change", updateColumnStructure);
 elements.confirmStructure?.addEventListener("click", confirmStructure);
 elements.questionOptions?.addEventListener("change", (event) => {
@@ -127,8 +128,16 @@ async function openXlsxDataset(file) {
   if (!sheetName) throw new Error("XLSX failā nav nevienas darblapas.");
   state.workbook = workbook;
   state.workbookName = file.name;
-  elements.sheetSelect.innerHTML = workbook.SheetNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+  const combineOption = workbook.SheetNames.length > 1
+    ? `<option value="${ALL_XLSX_SHEETS}">Visas darblapas kopā</option>`
+    : "";
+  elements.sheetSelect.innerHTML = `${workbook.SheetNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")}${combineOption}`;
   openXlsxSheet(sheetName);
+}
+
+function openXlsxSelection(selection) {
+  if (selection === ALL_XLSX_SHEETS) openAllXlsxSheets();
+  else openXlsxSheet(selection);
 }
 
 function openXlsxSheet(sheetName) {
@@ -146,6 +155,70 @@ function openXlsxSheet(sheetName) {
   } catch (error) {
     setStatus(error.message || "Izvēlēto XLSX darblapu neizdevās nolasīt.", true);
   }
+}
+
+function openAllXlsxSheets() {
+  try {
+    const datasets = [];
+    const skippedSheets = [];
+    for (const sheetName of state.workbook?.SheetNames || []) {
+      const worksheet = state.workbook.Sheets[sheetName];
+      const matrix = window.XLSX.utils.sheet_to_json(worksheet, {
+        header: 1,
+        raw: false,
+        defval: "",
+        blankrows: false,
+      });
+      if (matrix.length < 2) {
+        skippedSheets.push(sheetName);
+        continue;
+      }
+      datasets.push({ sheetName, ...matrixToDataset(matrix) });
+    }
+    if (!datasets.length) throw new Error("XLSX failā nav apvienojamu datu rindu.");
+
+    const unionHeaders = [];
+    for (const dataset of datasets) {
+      for (const header of dataset.headers) {
+        if (!unionHeaders.includes(header)) unionHeaders.push(header);
+      }
+    }
+    const sourceColumn = uniqueColumnName(unionHeaders, "XLSX darblapa");
+    if (unionHeaders.length + 1 > MAX_COLUMNS) {
+      throw new Error(`Apvienotajās darblapās ir vairāk nekā ${MAX_COLUMNS} atšķirīgas kolonnas.`);
+    }
+
+    const rows = [];
+    let truncated = datasets.some((dataset) => dataset.truncated);
+    for (const dataset of datasets) {
+      for (const row of dataset.rows) {
+        if (rows.length >= MAX_ROWS) {
+          truncated = true;
+          break;
+        }
+        rows.push(Object.fromEntries([
+          [sourceColumn, dataset.sheetName],
+          ...unionHeaders.map((header) => [header, row[header] ?? ""]),
+        ]));
+      }
+      if (rows.length >= MAX_ROWS) break;
+    }
+
+    state.sheetName = ALL_XLSX_SHEETS;
+    openDataset({ headers: [sourceColumn, ...unionHeaders], rows, truncated }, `${state.workbookName} · visas darblapas`, { preserveWorkbook: true });
+    const limitNote = truncated ? ` Drošības ierobežojuma dēļ parādīti pirmie ${MAX_ROWS.toLocaleString("lv-LV")} ieraksti.` : "";
+    const skippedNote = skippedSheets.length ? ` Izlaistas darblapas bez datu rindām: ${skippedSheets.join(", ")}.` : "";
+    setStatus(`${rows.length.toLocaleString("lv-LV")} ieraksti apvienoti no ${datasets.length} darblapām. Kolonna “${sourceColumn}” saglabā katra ieraksta izcelsmi.${limitNote}${skippedNote}`);
+  } catch (error) {
+    setStatus(error.message || "XLSX darblapas neizdevās apvienot.", true);
+  }
+}
+
+function uniqueColumnName(headers, preferredName) {
+  if (!headers.includes(preferredName)) return preferredName;
+  let number = 2;
+  while (headers.includes(`${preferredName} (${number})`)) number += 1;
+  return `${preferredName} (${number})`;
 }
 
 function detectDelimiter(text) {
@@ -251,6 +324,7 @@ function profileColumn(column) {
 function inferType(column, values, uniqueCount) {
   if (!values.length) return "tukšs";
   const name = column.toLocaleLowerCase("lv");
+  if (/darblapa|worksheet|sheet/.test(name)) return "kategorija";
   if (/vieta|pilsēta|valsts|adrese|place|city|country|location/.test(name)) return "vieta";
   if (/persona|autors|vārds|uzvārds|person|author|creator/.test(name)) return "persona";
   if (/^(id|nr\.?|numurs)$|identifikator/.test(name)) return "identifikators";

@@ -25,7 +25,7 @@ The first browser-based prototype is implemented. It provides:
 
 - a public SYD landing page;
 - local CSV, TSV, and XLSX import with a 5 MB safety limit;
-- XLSX worksheet selection and editable column-type review;
+- XLSX worksheet selection or multi-worksheet merging with a source-sheet column, and editable column-type review;
 - automatic column type, missing-value, and uniqueness summaries;
 - guided selection between category, time, and record-exploration views;
 - up to three data-aware SYD Library recommendations with explicit limitations;
