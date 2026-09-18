@@ -27,7 +27,6 @@ The first browser-based prototype is implemented. It provides:
 - local CSV, TSV, and XLSX import with a 5 MB safety limit;
 - XLSX worksheet selection or multi-worksheet merging with a source-sheet column, and editable column-type review;
 - automatic column type, missing-value, and uniqueness summaries;
-- data-specific preparation advice for blanks, duplicate rows, mixed date formats, missing-value markers, multi-value fields, and merged worksheet structures;
 - guided selection between category, time, and record-exploration views;
 - up to three data-aware SYD Library recommendations with explicit limitations;
 - category-frequency, place-frequency, time-distribution, category-comparison, interactive-network, and record-browser modules;
