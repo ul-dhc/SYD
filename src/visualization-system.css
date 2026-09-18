@@ -165,6 +165,8 @@
 .matrix-corner { border-bottom: 1px solid var(--viz-line); }
 .matrix-column-label { position: relative; height: 124px; overflow: visible; border: 0; border-bottom: 1px solid var(--viz-line); background: transparent; color: var(--viz-muted); cursor: pointer; }
 .matrix-column-label span { position: absolute; bottom: 10px; left: 50%; display: block; max-width: 112px; font-size: .5625rem; transform: rotate(-52deg); transform-origin: 0 100%; white-space: nowrap; }
+.collaboration-matrix.is-compact-labels .matrix-column-label { display: grid; height: 52px; place-items: end center; padding: 0 8px 10px; }
+.collaboration-matrix.is-compact-labels .matrix-column-label span { position: static; display: -webkit-box; max-width: 100%; overflow: hidden; line-height: 1.25; text-align: center; white-space: normal; transform: none; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .matrix-column-label:hover, .matrix-column-label.is-active, .matrix-row-label:hover, .matrix-row-label.is-active { color: var(--viz-ink); background: color-mix(in srgb, var(--viz-blue) 8%, transparent); }
 .matrix-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; min-height: 34px; }
 .matrix-row-label { overflow: hidden; border: 0; border-right: 1px solid var(--viz-line); padding: 0 10px 0 0; background: transparent; color: var(--viz-muted); cursor: pointer; font-size: .5625rem; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
