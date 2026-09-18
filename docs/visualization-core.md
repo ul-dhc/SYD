@@ -104,3 +104,9 @@ Pārbaudīts, ka matricas pāra atlase pāriet uz tīklu un detaļu paneli, bet 
 - turpmākie SYD zīmola pielāgojumi var tikt pievienoti pēc kopīgās sistēmas, nemainot datu darbplūsmas stilus.
 
 Šis sadalījums saglabā līdzšinējo CSS secību, tāpēc tīkla un pārskata vizuālais rezultāts nemainās. Vienlaikus tas novērš situāciju, kurā NSRD sistēmas noteikumi ir sajaukti ar SYD datu sagatavošanas lapas noteikumiem.
+
+## SYD zīmola pielāgojumu slānis
+
+7. solī pēc kopīgās vizualizāciju sistēmas pievienots `visualization-brand.css`. Tas sasaista vizualizācijas ar SYD pamatlapas virsmu, teksta, līniju un akcenta krāsām.
+
+Pielāgojumu slānis nemaina datu paletes, mezglu formas, diagrammu ģeometriju, animācijas, izkārtojumu vai responsīvo uzvedību. Līdz ar to NSRD vizualizāciju principi paliek vienoti, bet SYD identitāte ir pārvaldāma vienā atsevišķā failā.

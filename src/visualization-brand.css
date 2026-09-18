@@ -1,0 +1,87 @@
+/*
+ * SYD brand adaptations for the shared visualization system.
+ * Data palettes, node shapes, chart geometry, motion, and layout stay unchanged.
+ */
+
+:root {
+  --syd-viz-paper: var(--paper);
+  --syd-viz-paper-deep: var(--paper-deep);
+  --syd-viz-card: var(--white);
+  --syd-viz-ink: var(--ink);
+  --syd-viz-muted: var(--muted);
+  --syd-viz-line: var(--line);
+  --syd-viz-accent: var(--accent);
+}
+
+.explorer-shell {
+  --viz-paper: var(--syd-viz-paper);
+  --viz-card: var(--syd-viz-card);
+  --viz-ink: var(--syd-viz-ink);
+  --viz-muted: var(--syd-viz-muted);
+  --viz-line: var(--syd-viz-line);
+  --background: var(--syd-viz-paper);
+  --foreground: var(--syd-viz-ink);
+  --card: var(--syd-viz-card);
+  --primary-foreground: var(--syd-viz-card);
+  --muted: var(--syd-viz-paper-deep);
+  --muted-foreground: var(--syd-viz-muted);
+  --border: var(--syd-viz-line);
+}
+
+.explorer-shell .syd-network {
+  --background: var(--syd-viz-paper);
+  --foreground: var(--syd-viz-ink);
+  --card: var(--syd-viz-card);
+  --primary-foreground: var(--syd-viz-card);
+  --muted: var(--syd-viz-paper-deep);
+  --muted-foreground: var(--syd-viz-muted);
+  --border: var(--syd-viz-line);
+}
+
+.explorer-shell .filter-field select,
+.explorer-shell .filter-field input,
+.explorer-shell .explorer-visual-panel .visual-controls select {
+  background: var(--syd-viz-card);
+}
+
+.explorer-shell .clear-filters-button:hover:not(:disabled),
+.explorer-shell .clear-filters-button:focus-visible {
+  border-color: var(--syd-viz-accent);
+  background: color-mix(in srgb, var(--syd-viz-accent) 7%, var(--syd-viz-card));
+}
+
+.explorer-shell .workspace-view-switcher button[aria-selected="true"],
+.explorer-shell .panel-toggle-badge {
+  background: var(--syd-viz-accent);
+  color: var(--syd-viz-card);
+}
+
+.explorer-shell .panel-drawer-close:focus-visible,
+.explorer-shell .panel-visibility-toggle:focus-visible {
+  color: var(--syd-viz-ink);
+  background: var(--syd-viz-paper-deep);
+}
+
+body.visualisation-focus {
+  background: var(--syd-viz-paper);
+}
+
+.visualisation-focus-header {
+  border-color: var(--syd-viz-line);
+  background: var(--syd-viz-card);
+}
+
+.focus-brand small,
+.focus-identity small {
+  color: var(--syd-viz-muted);
+}
+
+.focus-identity strong,
+#close-visualisation-focus {
+  color: var(--syd-viz-ink);
+}
+
+#close-visualisation-focus:hover,
+#close-visualisation-focus:focus-visible {
+  color: var(--syd-viz-accent);
+}

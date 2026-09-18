@@ -11,6 +11,7 @@ This directory contains the dependency-free browser application:
 - `workspace.css` defines only the data preparation and question-selection workflow;
 - `visualization.css` is the single CSS entrypoint for the isolated NSRD-derived visualization system;
 - `visualization-system.css` is its internal module for the three-column workspace, overview, filters, details, and responsive drawers;
-- `network.css` is its internal module for network palettes, standard and pencil rendering, and movement modes.
+- `network.css` is its internal module for network palettes, standard and pencil rendering, and movement modes;
+- `visualization-brand.css` applies only SYD surface, text, border, and interface-accent tokens after the shared NSRD-derived modules.
 
 The source remains independent of NSRD-specific concepts such as people, artefacts, formats, groups, and institutions. A dataset adapter maps table columns to visual roles, while example-specific meaning belongs in project configurations.
