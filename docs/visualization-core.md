@@ -40,4 +40,21 @@ Stāvoklis pārbauda atļautās izvēles un pēc kolonnu ieslēgšanas, izslēg�
 
 `tests/visualization-core.test.mjs` pārbauda datu lomas, stabilus ierakstu identifikatorus, vairāku vērtību laukus, meklēšanu, filtrus, divdaļīgo un daudzslāņu grafiku, avota ierakstu sasaisti, atlases loģiku un stāvokļa pielāgošanu datu struktūras izmaiņām.
 
-Nākamais solis ir pieslēgt šim kodolam NSRD tīkla algoritmus un nemainīto SVG klašu līgumu.
+## NSRD tīkla kodols
+
+3. solī vienotajam datu un stāvokļu slānim pieslēgts NSRD principiem atbilstošs tīkla dzinējs:
+
+- brīvais režīms izmanto determinētu sākuma izvietojumu un 95 spēku simulācijas iterācijas;
+- hierarhiskais režīms katru datu lomu novieto savā rindā un kārto mezglus pēc saišu pakāpes;
+- divdaļīgais režīms veido divas izvēlēto datu lomu kolonnas;
+- kolonnas tiek kartētas uz piecām formām: aplis, rombs, noapaļots kvadrāts, trijstūris un sešstūris;
+- mezgla izmērs atkarīgs no svērtās saišu pakāpes un izvēlētā izkārtojuma;
+- saites beidzas pie mezgla ārmalas un pārvietojas reizē ar vilktu mezglu;
+- brīvajā režīmā pieejama apturama dreifēšana un mezglu izkliedēšana;
+- SVG izmanto NSRD klašu līgumu `network-edges`, `network-edge-base`, `network-edge-flow`, `network-nodes`, `graph-node` un `node-shape`;
+- standarta un zīmuļa stils, piecas paletes un četri kustības režīmi darbojas visiem pieciem mezglu tipiem;
+- datu slāņus var ieslēgt un izslēgt, nezaudējot sasaisti ar avota ierakstiem.
+
+Animācija maina esošo SVG elementu koordinātas, nevis atkārtoti pārbūvē visu tīklu. Tas saglabā stabilu tastatūras fokusu, klikšķināšanu un mezglu vilkšanu.
+
+Nākamais solis ir pārnest NSRD darbvietas rīkjoslu, filtru un detaļu paneļus.

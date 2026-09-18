@@ -1,11 +1,11 @@
 import { SYD_LIBRARY } from "./library.js";
-import { renderInteractiveNetwork } from "./network.js?v=8";
+import { renderInteractiveNetwork } from "./network.js?v=9";
 import {
   createBipartiteGraph,
   createVisualizationModel,
   filterVisualizationRecords,
   roleForColumn,
-} from "./visualization-data.js?v=8";
+} from "./visualization-data.js?v=9";
 import {
   clearVisualizationFilters,
   createVisualizationState,
@@ -14,7 +14,7 @@ import {
   setRoleFilter,
   setVisualizationOption,
   visualizationPreferences,
-} from "./visualization-state.js?v=8";
+} from "./visualization-state.js?v=9";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_ROWS = 10_000;
@@ -678,8 +678,8 @@ function configureVisualisation() {
   elements.interpretation.textContent = config.interpretation;
   updateVisualisationIdentity(config);
   elements.chartSettings.hidden = ["network", "records"].includes(config.renderer);
-  elements.fieldControl.hidden = ["records", "overview"].includes(config.renderer);
-  elements.secondFieldControl.hidden = !["comparison", "network"].includes(config.renderer);
+  elements.fieldControl.hidden = ["records", "overview", "network"].includes(config.renderer);
+  elements.secondFieldControl.hidden = config.renderer !== "comparison";
   elements.limitControl.hidden = ["records", "overview", "comparison", "network"].includes(config.renderer);
   elements.fieldSelect.innerHTML = config.fields.map((profile) => `<option value="${escapeHtml(profile.name)}">${escapeHtml(profile.name)} · ${profile.type}</option>`).join("");
   elements.secondFieldSelect.innerHTML = elements.fieldSelect.innerHTML;
@@ -843,28 +843,18 @@ function renderComparison() {
 }
 
 function renderNetwork() {
-  const pairData = buildPairData();
-  if (!pairData) {
+  const firstRole = roleForColumn(state.visualizationModel, elements.fieldSelect.value);
+  const secondRole = roleForColumn(state.visualizationModel, elements.secondFieldSelect.value);
+  if (!firstRole || !secondRole || firstRole.id === secondRole.id) {
     elements.visualOutput.innerHTML = `<div class="empty-state"><p>Izvēlieties divas atšķirīgas kolonnas.</p></div>`;
     return;
   }
-  const { firstField, secondField, pairs, firstCounts, secondCounts } = pairData;
-  const firstEntries = [...firstCounts].sort((a, b) => b[1] - a[1]).slice(0, 8);
-  const secondEntries = [...secondCounts].sort((a, b) => b[1] - a[1]).slice(0, 8);
-  const firstValues = new Set(firstEntries.map(([value]) => value));
-  const secondValues = new Set(secondEntries.map(([value]) => value));
-  const links = [...pairs]
-    .map(([key, count]) => {
-      const [firstValue, secondValue] = key.split("\u0000");
-      return { firstValue, secondValue, count };
-    })
-    .filter((link) => firstValues.has(link.firstValue) && secondValues.has(link.secondValue));
+  const roleIds = state.visualizationModel.roles.map((role) => role.id);
+  state.visualization.bipartiteRoleIds = [firstRole.id, secondRole.id];
   renderInteractiveNetwork(elements.visualOutput, {
-    firstField,
-    secondField,
-    firstEntries,
-    secondEntries,
-    links,
+    model: state.visualizationModel,
+    records: filterVisualizationRecords(state.visualizationModel, state.visualization),
+    roleIds,
   }, state.visualization, () => {
     saveChartPreferences();
     applyChartPreferences();

@@ -90,8 +90,7 @@ export function createBipartiteGraph(model, firstRoleId, secondRoleId, records =
 
   return {
     roles: [firstRole, secondRole],
-    nodes: [...firstNodes.values(), ...secondNodes.values()].map(finalizeNode),
-    edges: [...edges.values()].map((edge) => ({ ...edge, recordIds: [...new Set(edge.recordIds)] })),
+    ...finalizeGraph([...firstNodes.values(), ...secondNodes.values()], [...edges.values()]),
   };
 }
 
@@ -125,8 +124,7 @@ export function createMultilayerGraph(model, roleIds, records = model?.records |
 
   return {
     roles,
-    nodes: [...nodes.values()].map(finalizeNode),
-    edges: [...edges.values()].map((edge) => ({ ...edge, recordIds: [...new Set(edge.recordIds)] })),
+    ...finalizeGraph([...nodes.values()], [...edges.values()]),
   };
 }
 
@@ -175,7 +173,18 @@ function addNodeRecord(nodes, role, value, recordId) {
 
 function finalizeNode(node) {
   const recordIds = [...new Set(node.recordIds)];
-  return { ...node, recordIds, degree: recordIds.length };
+  return { ...node, type: node.paletteSlot, recordIds, degree: 0 };
+}
+
+function finalizeGraph(rawNodes, rawEdges) {
+  const edges = rawEdges.map((edge) => ({ ...edge, recordIds: [...new Set(edge.recordIds)] }));
+  const degree = new Map();
+  for (const edge of edges) {
+    degree.set(edge.source, (degree.get(edge.source) || 0) + edge.weight);
+    degree.set(edge.target, (degree.get(edge.target) || 0) + edge.weight);
+  }
+  const nodes = rawNodes.map(finalizeNode).map((node) => ({ ...node, degree: degree.get(node.id) || 0 }));
+  return { nodes, edges };
 }
 
 function nodeId(roleId, value) {

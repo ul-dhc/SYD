@@ -40,6 +40,19 @@ test("adapteris izveido lomas un stabilus ierakstu identifikatorus", () => {
   assert.deepEqual(model.records[0].fields[roleForColumn(model, "Kategorija").id], ["Mūzika", "Lasījums"]);
 });
 
+test("adapteris kartē kolonnu tipus uz piecām NSRD mezglu formām", () => {
+  const shapeProfiles = [
+    { name: "Artefakts", type: "identifikators", included: true },
+    { name: "Persona", type: "persona", included: true },
+    { name: "Formāts", type: "kategorija", included: true },
+    { name: "Grupa", type: "vairākas vērtības", included: true },
+    { name: "Institūcija", type: "vieta", included: true },
+  ];
+  const model = createVisualizationModel([{ Artefakts: "A", Persona: "P", Formāts: "F", Grupa: "G", Institūcija: "I" }], shapeProfiles);
+  assert.deepEqual(model.roles.map((role) => role.paletteSlot), ["artifact", "person", "format", "group", "institution"]);
+  assert.deepEqual(model.roles.map((role) => role.shape), ["diamond", "circle", "rounded-square", "triangle", "hexagon"]);
+});
+
 test("kopīgie filtri darbojas pēc lomas un meklēšana neņem vērā diakritiskās zīmes", () => {
   const model = createVisualizationModel(rows, profiles);
   const state = initializeVisualizationState(createVisualizationState(), model);
@@ -60,7 +73,7 @@ test("divdaļīgais grafiks saglabā mezglu, saišu un avota ierakstu sasaisti",
   const anna = graph.nodes.find((node) => node.label === "Anna");
   const music = graph.nodes.find((node) => node.label === "Mūzika");
   const edge = graph.edges.find((item) => item.source === anna.id && item.target === music.id);
-  assert.equal(anna.degree, 2);
+  assert.equal(anna.degree, 3);
   assert.equal(edge.weight, 2);
   assert.deepEqual(edge.recordIds, ["record:A-1", "record:A-2"]);
 });
