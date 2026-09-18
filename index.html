@@ -23,8 +23,8 @@
     <title>SYD – See Your Data</title>
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
     <link rel="stylesheet" href="./src/styles.css" />
-    <link rel="stylesheet" href="./src/workspace.css?v=7" />
-    <link rel="stylesheet" href="./src/network.css?v=7" />
+    <link rel="stylesheet" href="./src/workspace.css?v=8" />
+    <link rel="stylesheet" href="./src/network.css?v=8" />
   </head>
   <body>
     <a class="skip-link" href="#workspace">Pāriet uz darba vidi</a>
@@ -218,12 +218,15 @@
               <i data-lucide="maximize-2" aria-hidden="true"></i>
             </button>
             <div class="explorer-shell">
-              <details class="explorer-filter-panel" open>
-                <summary>
+              <button class="panel-scrim" id="panel-scrim" type="button" aria-label="Aizvērt paneli" hidden></button>
+              <aside class="explorer-filter-panel" id="explorer-filter-panel" aria-label="Filtri">
+                <div class="explorer-panel-title">
                   <i data-lucide="list-filter" aria-hidden="true"></i>
                   <span><strong>Filtri</strong><small id="filter-summary">Visi ieraksti</small></span>
-                  <i class="filter-chevron" data-lucide="chevron-down" aria-hidden="true"></i>
-                </summary>
+                  <button class="panel-drawer-close" id="close-filter-panel" type="button" aria-label="Aizvērt filtrus" title="Aizvērt filtrus">
+                    <i data-lucide="x" aria-hidden="true"></i>
+                  </button>
+                </div>
                 <div class="filter-panel-body">
                   <label class="filter-field search-filter-field">
                     <span>Meklēt datos</span>
@@ -235,8 +238,21 @@
                     Notīrīt filtrus
                   </button>
                 </div>
-              </details>
+              </aside>
               <div class="explorer-visual-panel">
+                <div class="workspace-view-bar">
+                  <button class="panel-visibility-toggle" id="toggle-filter-panel" type="button" aria-controls="explorer-filter-panel" aria-expanded="true" aria-label="Paslēpt filtrus" title="Paslēpt filtrus">
+                    <i data-lucide="panel-left-close" aria-hidden="true"></i>
+                    <span>Filtri</span>
+                    <b class="panel-toggle-badge" id="filter-count-badge" hidden>0</b>
+                  </button>
+                  <div class="workspace-view-title"><i data-lucide="chart-no-axes-combined" aria-hidden="true"></i><strong>Vizualizācija</strong></div>
+                  <button class="panel-visibility-toggle" id="toggle-detail-panel" type="button" aria-controls="explorer-detail-panel" aria-expanded="true" aria-label="Paslēpt detaļas" title="Paslēpt detaļas">
+                    <i data-lucide="panel-right-close" aria-hidden="true"></i>
+                    <span>Detaļas</span>
+                    <b class="panel-toggle-badge" id="selection-count-badge" hidden>0</b>
+                  </button>
+                </div>
                 <div class="visual-controls" id="visual-controls">
                   <div class="chart-settings" id="chart-settings">
                     <label><span>Stils</span><select id="chart-style-select"><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label>
@@ -257,6 +273,16 @@
                 <div class="visual-output" id="visual-output" aria-live="polite"></div>
                 <aside class="interpretation" id="interpretation"><strong>Interpretācijas piezīme</strong><p>Biežums parāda ierakstu skaitu, nevis parādības nozīmīgumu.</p></aside>
               </div>
+              <aside class="explorer-detail-panel" id="explorer-detail-panel" aria-label="Detaļas">
+                <div class="explorer-panel-title">
+                  <i data-lucide="info" aria-hidden="true"></i>
+                  <span><strong>Detaļas</strong><small>Atlasītie dati</small></span>
+                  <button class="panel-drawer-close" id="close-detail-panel" type="button" aria-label="Aizvērt detaļas" title="Aizvērt detaļas">
+                    <i data-lucide="x" aria-hidden="true"></i>
+                  </button>
+                </div>
+                <div class="detail-panel-body" id="detail-panel-body"></div>
+              </aside>
             </div>
           </section>
         </div>
@@ -294,6 +320,6 @@
 
     <script src="./src/vendor/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/lucide@0.503.0/dist/umd/lucide.min.js"></script>
-    <script type="module" src="./src/app.js?v=9"></script>
+    <script type="module" src="./src/app.js?v=10"></script>
   </body>
 </html>

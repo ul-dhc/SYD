@@ -2,8 +2,10 @@ import { SYD_LIBRARY } from "./library.js";
 import { renderInteractiveNetwork } from "./network.js?v=9";
 import {
   createBipartiteGraph,
+  createMultilayerGraph,
   createVisualizationModel,
   filterVisualizationRecords,
+  recordIdsForSelection,
   roleForColumn,
 } from "./visualization-data.js?v=9";
 import {
@@ -52,6 +54,8 @@ const state = {
   visualizationModel: null,
   visualization: createVisualizationState(savedVisualizationPreferences),
   focusReturnScroll: 0,
+  filtersPanelOpen: true,
+  detailsPanelOpen: true,
 };
 
 const elements = {
@@ -86,6 +90,15 @@ const elements = {
   clearVisualFilters: document.querySelector("#clear-visual-filters"),
   filterSummary: document.querySelector("#filter-summary"),
   filterPanel: document.querySelector(".explorer-filter-panel"),
+  detailPanel: document.querySelector("#explorer-detail-panel"),
+  detailPanelBody: document.querySelector("#detail-panel-body"),
+  panelScrim: document.querySelector("#panel-scrim"),
+  toggleFilterPanel: document.querySelector("#toggle-filter-panel"),
+  toggleDetailPanel: document.querySelector("#toggle-detail-panel"),
+  closeFilterPanel: document.querySelector("#close-filter-panel"),
+  closeDetailPanel: document.querySelector("#close-detail-panel"),
+  filterCountBadge: document.querySelector("#filter-count-badge"),
+  selectionCountBadge: document.querySelector("#selection-count-badge"),
   explorerShell: document.querySelector(".explorer-shell"),
   chartSettings: document.querySelector("#chart-settings"),
   chartStyle: document.querySelector("#chart-style-select"),
@@ -100,12 +113,14 @@ const elements = {
   stepperItems: [...document.querySelectorAll(".stepper li")],
 };
 
-const compactFilterMedia = window.matchMedia("(max-width: 900px)");
-function syncFilterPanelViewport(event = compactFilterMedia) {
-  if (elements.filterPanel) elements.filterPanel.open = !event.matches;
+const compactWorkspaceMedia = window.matchMedia("(max-width: 1100px)");
+function syncWorkspaceViewport(event = compactWorkspaceMedia) {
+  state.filtersPanelOpen = !event.matches;
+  state.detailsPanelOpen = !event.matches;
+  renderWorkspacePanels();
 }
-syncFilterPanelViewport();
-compactFilterMedia.addEventListener?.("change", syncFilterPanelViewport);
+syncWorkspaceViewport();
+compactWorkspaceMedia.addEventListener?.("change", syncWorkspaceViewport);
 applyChartPreferences();
 window.addEventListener("hashchange", syncVisualisationFocus);
 
@@ -140,6 +155,11 @@ elements.generatedFilters?.addEventListener("change", (event) => {
   renderVisualisation();
 });
 elements.clearVisualFilters?.addEventListener("click", clearVisualFilters);
+elements.toggleFilterPanel?.addEventListener("click", () => toggleWorkspacePanel("filters"));
+elements.toggleDetailPanel?.addEventListener("click", () => toggleWorkspacePanel("details"));
+elements.closeFilterPanel?.addEventListener("click", () => setWorkspacePanel("filters", false));
+elements.closeDetailPanel?.addEventListener("click", () => setWorkspacePanel("details", false));
+elements.panelScrim?.addEventListener("click", closeWorkspacePanels);
 elements.chartStyle?.addEventListener("change", () => {
   setVisualizationOption(state.visualization, "style", elements.chartStyle.value);
   saveChartPreferences();
@@ -594,6 +614,79 @@ function updateFilterSummary(rows) {
     ? `${rows.length.toLocaleString("lv-LV")} no ${state.rows.length.toLocaleString("lv-LV")} ierakstiem · ${activeCount} ${activeCount === 1 ? "filtrs" : "filtri"}`
     : `${state.rows.length.toLocaleString("lv-LV")} ieraksti`;
   elements.clearVisualFilters.disabled = activeCount === 0;
+  elements.filterCountBadge.textContent = activeCount;
+  elements.filterCountBadge.hidden = activeCount === 0;
+}
+
+function toggleWorkspacePanel(panel) {
+  const key = panel === "filters" ? "filtersPanelOpen" : "detailsPanelOpen";
+  setWorkspacePanel(panel, !state[key]);
+}
+
+function setWorkspacePanel(panel, open) {
+  if (panel === "filters") {
+    state.filtersPanelOpen = open;
+    if (open && compactWorkspaceMedia.matches) state.detailsPanelOpen = false;
+  } else {
+    state.detailsPanelOpen = open;
+    if (open && compactWorkspaceMedia.matches) state.filtersPanelOpen = false;
+  }
+  renderWorkspacePanels();
+}
+
+function closeWorkspacePanels() {
+  state.filtersPanelOpen = false;
+  state.detailsPanelOpen = false;
+  renderWorkspacePanels();
+}
+
+function renderWorkspacePanels() {
+  if (!elements.explorerShell) return;
+  elements.explorerShell.classList.toggle("is-filters-collapsed", !state.filtersPanelOpen);
+  elements.explorerShell.classList.toggle("is-details-collapsed", !state.detailsPanelOpen);
+  elements.toggleFilterPanel.setAttribute("aria-expanded", String(state.filtersPanelOpen));
+  elements.toggleDetailPanel.setAttribute("aria-expanded", String(state.detailsPanelOpen));
+  elements.toggleFilterPanel.setAttribute("aria-label", state.filtersPanelOpen ? "Paslēpt filtrus" : "Rādīt filtrus");
+  elements.toggleDetailPanel.setAttribute("aria-label", state.detailsPanelOpen ? "Paslēpt detaļas" : "Rādīt detaļas");
+  elements.toggleFilterPanel.title = state.filtersPanelOpen ? "Paslēpt filtrus" : "Rādīt filtrus";
+  elements.toggleDetailPanel.title = state.detailsPanelOpen ? "Paslēpt detaļas" : "Rādīt detaļas";
+  elements.panelScrim.hidden = !(compactWorkspaceMedia.matches && (state.filtersPanelOpen || state.detailsPanelOpen));
+}
+
+function renderWorkspaceDetails(filteredRecords = filterVisualizationRecords(state.visualizationModel, state.visualization)) {
+  if (!elements.detailPanelBody || !state.visualizationModel) return;
+  const roleIds = state.visualizationModel.roles.map((role) => role.id);
+  const graph = createMultilayerGraph(state.visualizationModel, roleIds, filteredRecords);
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+  const selectedNodes = state.visualization.selectedNodeIds.map((id) => nodeById.get(id)).filter(Boolean);
+  const selectedRecordIds = selectedNodes.length
+    ? recordIdsForSelection(graph, selectedNodes.map((node) => node.id), state.visualization.selectionLogic)
+    : new Set();
+  const relatedRecords = selectedNodes.length
+    ? filteredRecords.filter((record) => selectedRecordIds.has(record.id))
+    : filteredRecords;
+  elements.selectionCountBadge.textContent = selectedNodes.length;
+  elements.selectionCountBadge.hidden = selectedNodes.length === 0;
+
+  if (!selectedNodes.length) {
+    elements.detailPanelBody.innerHTML = `<div class="detail-empty"><i data-lucide="mouse-pointer-click" aria-hidden="true"></i><strong>${filteredRecords.length.toLocaleString("lv-LV")} ieraksti pašreizējā atlasē</strong><p>Izvēlieties mezglu vai diagrammas elementu, lai šeit redzētu saistītos datus.</p></div>`;
+    window.lucide?.createIcons({ attrs: { "stroke-width": 1.8 } });
+    return;
+  }
+
+  const paletteColors = { person: "var(--viz-blue)", artifact: "var(--viz-orange)", format: "var(--viz-green)", group: "var(--viz-magenta)", institution: "var(--viz-teal)" };
+  elements.detailPanelBody.innerHTML = `<div class="detail-summary"><div><strong>${selectedNodes.length}</strong><span>atlasīti mezgli</span></div><div><strong>${relatedRecords.length}</strong><span>saistīti ieraksti</span></div></div>
+    <section class="detail-selection"><h4>Atlase</h4>${selectedNodes.map((node) => `<div class="detail-chip" style="--chip-color:${paletteColors[node.type] || "var(--viz-blue)"}"><i></i><span title="${escapeHtml(node.label)}">${escapeHtml(node.label)}</span><small>${escapeHtml(state.visualizationModel.roleById.get(node.roleId)?.label || "Vērtība")}</small></div>`).join("")}</section>
+    <section class="detail-records"><h4>Saistītie ieraksti</h4>${relatedRecords.slice(0, 8).map(detailRecordMarkup).join("")}${relatedRecords.length > 8 ? `<span class="detail-more">Vēl ${relatedRecords.length - 8} ieraksti</span>` : ""}</section>`;
+}
+
+function detailRecordMarkup(record) {
+  const values = state.visualizationModel.roles
+    .flatMap((role) => record.fields[role.id].map((value) => ({ role, value })))
+    .filter(({ value }) => value && value !== "Nav norādīts");
+  const primary = values[0]?.value || record.id;
+  const secondary = values.slice(1, 4).map(({ role, value }) => `${role.label}: ${value}`).join(" · ");
+  return `<div class="detail-record"><strong title="${escapeHtml(primary)}">${escapeHtml(primary)}</strong><span>${escapeHtml(secondary || "Papildu dati nav norādīti")}</span></div>`;
 }
 
 function clearVisualFilters() {
@@ -739,6 +832,7 @@ function renderVisualisation() {
   elements.visualOutput.classList.toggle("network-output", config.renderer === "network");
   const rows = getFilteredRows();
   updateFilterSummary(rows);
+  renderWorkspaceDetails(filterVisualizationRecords(state.visualizationModel, state.visualization));
   if (config.renderer === "overview") return renderDataOverview(rows);
   if (config.renderer === "records") return renderRecords();
   if (config.renderer === "comparison") return renderComparison();
@@ -858,6 +952,7 @@ function renderNetwork() {
   }, state.visualization, () => {
     saveChartPreferences();
     applyChartPreferences();
+    renderWorkspaceDetails(filterVisualizationRecords(state.visualizationModel, state.visualization));
   });
 }
 
@@ -904,6 +999,9 @@ function resetWorkspace() {
   history.replaceState(null, "", "#workspace");
   Object.assign(state, { rows: [], columns: [], profiles: [], name: "", question: "categories", workbook: null, workbookName: "", sheetName: "", structureConfirmed: false, moduleId: "", recommendations: [], visualizationModel: null });
   clearVisualizationFilters(state.visualization);
+  state.filtersPanelOpen = !compactWorkspaceMedia.matches;
+  state.detailsPanelOpen = !compactWorkspaceMedia.matches;
+  renderWorkspacePanels();
   if (elements.searchFilter) elements.searchFilter.value = "";
   if (elements.generatedFilters) elements.generatedFilters.innerHTML = "";
   elements.analysis.hidden = true;

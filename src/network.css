@@ -256,7 +256,8 @@
 
 @media (max-width: 960px) {
   .syd-network-toolbar { align-items: stretch; flex-wrap: wrap; overflow: visible; }
-  .syd-network-toolbar-tools { width: 100%; }
+  .syd-network-toolbar-tools { width: 100%; align-items: flex-end; flex-wrap: wrap; gap: 8px; }
+  .syd-network-tools { margin-left: 0; }
   .syd-network-legend { width: 100%; min-height: 40px; overflow-x: auto; gap: 12px; }
 }
 

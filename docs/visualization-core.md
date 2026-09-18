@@ -57,4 +57,20 @@ Stāvoklis pārbauda atļautās izvēles un pēc kolonnu ieslēgšanas, izslēg�
 
 Animācija maina esošo SVG elementu koordinātas, nevis atkārtoti pārbūvē visu tīklu. Tas saglabā stabilu tastatūras fokusu, klikšķināšanu un mezglu vilkšanu.
 
-Nākamais solis ir pārnest NSRD darbvietas rīkjoslu, filtru un detaļu paneļus.
+## NSRD darbvietas struktūra
+
+4. solī tīkla un citu vizualizāciju ietvars pārveidots par NSRD principiem atbilstošu darbvietu:
+
+- datorā filtri, vizualizācija un detaļas veido `248 px / elastīgs laukums / 310 px` kolonnu izkārtojumu;
+- abus sānu paneļus var neatkarīgi paslēpt, piešķirot vizualizācijai visu pieejamo platumu;
+- filtru panelis parāda kopīgās meklēšanas un lauku atlases, kas ietekmē visas vizualizācijas;
+- detaļu panelis sasaista atlasītos tīkla mezglus ar to datu lomām un avota ierakstiem;
+- aktīvo filtru un atlasīto mezglu skaits redzams paneļu pogās;
+- planšetē paneļi kļūst par 360 px sānu atvilktnēm;
+- telefonā paneļi atveras no apakšas pilnā ekrāna platumā;
+- vienlaikus var būt atvērta tikai viena kompaktā atvilktne, un to var aizvērt ar pogu vai aptumšoto fonu;
+- paneļu vadīklas ir vismaz 44 px augstas.
+
+Detaļu saturs tiek veidots no ģeneriskajām datu lomām un ierakstu identifikatoriem. Tajā nav NSRD laukiem piesaistītu nosaukumu vai nosacījumu.
+
+Pārlūkā pārbaudīti 360, 480, 820 un 1280 px platumi. Visos platumos dokumenta platums sakrīt ar pārlūka loga platumu, un filtri, atlase un paneļu pārslēgšana darbojas ar reāliem klikšķiem.
