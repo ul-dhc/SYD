@@ -19,9 +19,9 @@ SYD sākas nevis ar tehnisku jautājumu “Kādu diagrammu vēlaties?”, bet ar
 
 Rīks apvieno trīs savstarpēji saistītas daļas:
 
-- **SYD Guide** – humanitāro datu metodoloģiskais sarunu konsultants;
+- **SYD Guide** – humanitāro zinātņu datu metodoloģiskais sarunu konsultants;
 - **SYD Explorer** – lokāla datu sagatavošanas, izpētes un vizualizācijas vide;
-- **SYD Library** – kurēta humanitāro datu metožu un vizualizāciju bibliotēka.
+- **SYD Library** – kurēta humanitāro zinātņu datu metožu un vizualizāciju bibliotēka.
 
 Pētniecības datu kopa pēc noklusējuma paliek lietotāja ierīcē. SYD Guide nevar piekļūt datu failam un saņem tikai to tekstu, ko lietotājs apzināti ieraksta sarunā. Publiskām vizualizācijām lietotājs var izvēlēties savu publiski pieejamo Google Sheet kā datu avotu; SYD datus nekopē un neglabā savā serverī.
 
@@ -37,7 +37,7 @@ Humanitāro zinātņu pētniekiem bieži ir:
 - pētniecības jautājums, bet nav tehnisko zināšanu piemērotas metodes izvēlei;
 - nepieciešamība izveidot vizualizāciju sākotnējai izpētei, publikācijai, prezentācijai vai publiskai komunikācijai.
 
-Esošie datu rīki bieži pieņem, ka lietotājs jau zina datu tipus, analīzes terminoloģiju un vēlamo vizualizācijas formu. Tie ne vienmēr respektē humanitāro datu nenoteiktību, avotu kritiku un interpretatīvo raksturu.
+Esošie datu rīki bieži pieņem, ka lietotājs jau zina datu tipus, analīzes terminoloģiju un vēlamo vizualizācijas formu. Tie ne vienmēr respektē humanitāro zinātņu datu nenoteiktību, avotu kritiku un interpretatīvo raksturu.
 
 SYD palīdz pētniekam iziet visu ceļu: no pētījuma jautājuma un datu apraksta līdz sagatavotam, interpretējamam un kopīgojamam skatam.
 
@@ -65,7 +65,7 @@ Atsevišķas metodes var būt noderīgas arī sociālo zinātņu pētniekiem, to
 
 ## 5. Produkta pamatprincipi
 
-### 5.1. Humanitāro datu specifika
+### 5.1. Humanitāro zinātņu datu specifika
 
 SYD respektē:
 
@@ -120,7 +120,7 @@ Lietotājam nav jāprot programmēt, rakstīt vaicājumus vai pārzināt datu vi
 
 ### 6.1. SYD Guide
 
-SYD Guide ir humanitāro datu metodoloģiskais sarunu konsultants.
+SYD Guide ir humanitāro zinātņu datu metodoloģiskais sarunu konsultants.
 
 Tas palīdz:
 
@@ -163,7 +163,7 @@ Visas datu pārveides izpilda determinēts SYD dzinējs no iepriekš definētu d
 
 ### 6.3. SYD Library
 
-SYD Library ir kurēta humanitāro datu metožu un vizualizāciju bibliotēka.
+SYD Library ir kurēta humanitāro zinātņu datu metožu un vizualizāciju bibliotēka.
 
 Katram modulim ir:
 
@@ -439,7 +439,7 @@ SYD ir izdevies, ja humanitāro zinātņu pētnieks bez programmēšanas pieredz
 
 ### Latviski
 
-> **SYD – See Your Data** ir vadīta humanitāro datu izpētes un vizualizācijas vide. Aprakstiet savu pētniecības jautājumu, izvēlieties piemērotu metodi un izpētiet savus datus bez programmēšanas. Privāta datu kopa paliek jūsu ierīcē; publiskai vizualizācijai varat izmantot savu publiski pieejamo Google Sheet.
+> **SYD – See Your Data** ir vadīta humanitāro zinātņu datu izpētes un vizualizācijas vide. Aprakstiet savu pētniecības jautājumu, izvēlieties piemērotu metodi un izpētiet savus datus bez programmēšanas. Privāta datu kopa paliek jūsu ierīcē; publiskai vizualizācijai varat izmantot savu publiski pieejamo Google Sheet.
 
 ### English
 
@@ -457,7 +457,7 @@ SYD ir izdevies, ja humanitāro zinātņu pētnieks bez programmēšanas pieredz
 
 ## 18. Atsauces sākotnējai izstrādei
 
-- [Palladio](https://hdlab.stanford.edu/palladio/) – tabulāru humanitāro datu izpētes un vizualizācijas precedents.
+- [Palladio](https://hdlab.stanford.edu/palladio/) – tabulāru humanitāro zinātņu datu izpētes un vizualizācijas precedents.
 - [Google Sheets as a data source](https://developers.google.com/chart/interactive/docs/spreadsheets) – publiska Google Sheet izmantošana tīmekļa vizualizācijās.
 - [GitHub Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits) – statiskas vietnes publicēšanas robežas.
 - [OpenAI data controls](https://developers.openai.com/api/docs/guides/your-data) – LLM sarunas datu apstrādes nosacījumi, kas jāņem vērā SYD Guide.

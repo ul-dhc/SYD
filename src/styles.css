@@ -207,9 +207,11 @@ h1 {
 }
 
 .privacy-icon {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
   color: var(--accent);
-  font-size: 2rem;
-  line-height: 1;
+  stroke-width: 1.7;
 }
 
 .workspace {
@@ -337,6 +339,13 @@ h2 {
 
 .button:hover {
   transform: translateY(-2px);
+}
+
+.button svg {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.8;
 }
 
 .button:focus-visible,

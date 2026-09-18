@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f4f0e7" />
     <meta
       name="description"
-      content="SYD ir vadīta humanitāro datu izpētes un vizualizācijas vide."
+      content="SYD ir vadīta humanitāro zinātņu datu izpētes un vizualizācijas vide."
     />
     <meta property="og:title" content="SYD – See Your Data" />
     <meta
@@ -46,15 +46,15 @@
     <main id="top">
       <section class="intro" aria-labelledby="intro-title">
         <div class="intro-copy">
-          <p class="eyebrow">Humanitāro datu izpētes vide</p>
-          <h1 id="intro-title">Sāciet ar jautājumu.<br />Ieraugiet savus datus.</h1>
+          <p class="eyebrow">Humanitāro zinātņu izpētes vide</p>
+          <h1 id="intro-title">No jūsu datu kopas<br />līdz vizualizācijai</h1>
           <p class="intro-lead">
             SYD palīdz izprast tabulas struktūru un izvēlēties piemērotu
             vizualizāciju – bez programmēšanas un bez datu nosūtīšanas uz serveri.
           </p>
         </div>
         <aside class="privacy-note" aria-label="Privātuma princips">
-          <span class="privacy-icon" aria-hidden="true">⌁</span>
+          <i class="privacy-icon" data-lucide="shield-check" aria-hidden="true"></i>
           <div>
             <strong>Jūsu dati paliek šajā pārlūkā.</strong>
             <p>Fails netiek augšupielādēts SYD vai nosūtīts LLM.</p>
@@ -86,7 +86,7 @@
               </p>
               <button class="button button-dark" id="load-demo" type="button">
                 Atvērt piemēra datus
-                <span aria-hidden="true">→</span>
+                <i data-lucide="arrow-right" aria-hidden="true"></i>
               </button>
             </div>
           </article>
@@ -101,7 +101,7 @@
               </p>
               <label class="button button-light" for="file-input">
                 Izvēlēties failu
-                <span aria-hidden="true">＋</span>
+                <i data-lucide="file-plus-2" aria-hidden="true"></i>
               </label>
               <input id="file-input" type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" />
             </div>
@@ -200,6 +200,7 @@
       <p>LU Digitālo humanitāro zinātņu centrs</p>
     </footer>
 
+    <script src="https://unpkg.com/lucide@0.503.0/dist/umd/lucide.min.js"></script>
     <script type="module" src="./src/app.js"></script>
   </body>
 </html>

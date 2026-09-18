@@ -2,6 +2,8 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_ROWS = 10_000;
 const MAX_COLUMNS = 100;
 
+window.lucide?.createIcons();
+
 const state = { rows: [], columns: [], profiles: [], name: "", question: "categories" };
 
 const elements = {
