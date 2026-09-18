@@ -148,7 +148,7 @@ Sarunas rezultāts ir strukturēts pētniecības un datu sagatavošanas plāns, 
 
 SYD Explorer ir lokālā darba vide, kurā pētnieks:
 
-- ielādē CSV, TSV vai vēlāk XLSX datu kopu;
+- ielādē CSV, TSV vai XLSX datu kopu;
 - apskata tabulas priekšskatījumu;
 - pārbauda kolonnu tipus;
 - identificē trūkstošas un atkārtotas vērtības;
@@ -333,7 +333,7 @@ LLM izmaksas jāierobežo atsevišķi ar īsām vadītām sarunām, izmantošana
 SYD 0.1 ietver:
 
 - NSRD/Seque demonstrācijas projektu;
-- CSV un TSV ielādi;
+- CSV, TSV un XLSX ielādi;
 - datu priekšskatījumu;
 - kolonnu konfigurēšanu;
 - datu kvalitātes pārskatu;
@@ -399,7 +399,7 @@ SYD ir izdevies, ja humanitāro zinātņu pētnieks bez programmēšanas pieredz
 
 ### 2. posms – lokālā datu darba vide
 
-- CSV/TSV imports;
+- CSV, TSV un XLSX imports;
 - kolonnu konfigurēšanas vednis;
 - datu kvalitātes pārskats;
 - pārveidojumu priekšskatījums un atsaukšana;

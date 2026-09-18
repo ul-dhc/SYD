@@ -2,7 +2,7 @@
 
 This directory contains the dependency-free browser application:
 
-- `app.js` handles local CSV/TSV parsing, profiling, question selection, and visualisation;
+- `app.js` handles local CSV, TSV, and XLSX parsing, profiling, question selection, and visualisation;
 - `styles.css` defines the landing page and shared visual language;
 - `workspace.css` defines the data workflow and result views.
 

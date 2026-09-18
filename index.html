@@ -95,16 +95,16 @@
           <article class="source-card">
             <span class="source-number">02</span>
             <div>
-              <h3>Atvērt savu CSV vai TSV</h3>
+              <h3>Atvērt savu CSV, TSV vai XLSX</h3>
               <p>
                 Fails tiks nolasīts tikai jūsu ierīcē. Pirmajā prototipā
-                atbalstām tabulas ar virsrakstu rindu.
+                atbalstām tabulas ar virsrakstu rindu un XLSX pirmo lapu.
               </p>
               <label class="button button-light" for="file-input">
                 Izvēlēties failu
                 <i data-lucide="file-plus-2" aria-hidden="true"></i>
               </label>
-              <input id="file-input" type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" />
+              <input id="file-input" type="file" accept=".csv,.tsv,.xlsx,text/csv,text/tab-separated-values,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
             </div>
           </article>
 
@@ -201,6 +201,7 @@
       <p>LU Digitālo humanitāro zinātņu centrs</p>
     </footer>
 
+    <script src="./src/vendor/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/lucide@0.503.0/dist/umd/lucide.min.js"></script>
     <script type="module" src="./src/app.js"></script>
   </body>

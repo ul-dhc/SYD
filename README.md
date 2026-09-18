@@ -24,7 +24,7 @@ The project combines three parts:
 The first browser-based prototype is implemented. It provides:
 
 - a public SYD landing page;
-- local CSV and TSV import with a 5 MB safety limit;
+- local CSV, TSV, and XLSX import with a 5 MB safety limit;
 - automatic column type, missing-value, and uniqueness summaries;
 - guided selection between category, time, and record-exploration views;
 - a category-frequency view, a time-distribution view, and a record browser;
@@ -54,6 +54,6 @@ The root `index.html` is intentionally dependency-free so the prototype can be h
 2. Define the SYD Library module manifest.
 3. Adapt NSRD/Seque as the first example configuration.
 4. Validate the model with a second, structurally different humanities dataset.
-5. Build guided CSV/TSV import and field mapping.
+5. Expand guided CSV, TSV, and XLSX import and field mapping.
 6. Add public Google Sheets views.
 7. Add SYD Guide after the Library contains real, usable modules.

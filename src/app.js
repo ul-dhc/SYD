@@ -60,14 +60,33 @@ async function loadFile(event) {
   }
   setStatus(`Nolasām “${file.name}” tikai šajā pārlūkā…`);
   try {
-    const text = await file.text();
-    const delimiter = file.name.toLowerCase().endsWith(".tsv") ? "\t" : detectDelimiter(text);
-    openDataset(parseDelimited(text, delimiter), file.name);
+    if (file.name.toLowerCase().endsWith(".xlsx")) {
+      await openXlsxDataset(file);
+    } else {
+      const text = await file.text();
+      const delimiter = file.name.toLowerCase().endsWith(".tsv") ? "\t" : detectDelimiter(text);
+      openDataset(parseDelimited(text, delimiter), file.name);
+    }
   } catch (error) {
     setStatus(error.message || "Failu neizdevās nolasīt.", true);
   } finally {
     event.target.value = "";
   }
+}
+
+async function openXlsxDataset(file) {
+  if (!window.XLSX) throw new Error("XLSX lasītāju neizdevās ielādēt. Atjaunojiet lapu un mēģiniet vēlreiz.");
+  const workbook = window.XLSX.read(await file.arrayBuffer(), { cellDates: true });
+  const [sheetName] = workbook.SheetNames;
+  if (!sheetName) throw new Error("XLSX failā nav nevienas darblapas.");
+  const worksheet = workbook.Sheets[sheetName];
+  const matrix = window.XLSX.utils.sheet_to_json(worksheet, {
+    header: 1,
+    raw: false,
+    defval: "",
+    blankrows: false,
+  });
+  openDataset(matrixToDataset(matrix), `${file.name} · ${sheetName}`);
 }
 
 function detectDelimiter(text) {
@@ -109,11 +128,16 @@ function parseDelimited(text, delimiter) {
   if (row.some((value) => value !== "")) matrix.push(row);
   if (matrix.length < 2) throw new Error("Tabulā jābūt virsrakstu rindai un vismaz vienam datu ierakstam.");
 
-  const rawHeaders = matrix[0].map((header, index) => header || `Kolonna ${index + 1}`);
+  return matrixToDataset(matrix);
+}
+
+function matrixToDataset(matrix) {
+  if (!Array.isArray(matrix) || matrix.length < 2) throw new Error("Tabulā jābūt virsrakstu rindai un vismaz vienam datu ierakstam.");
+  const rawHeaders = matrix[0].map((header, index) => String(header ?? "").trim() || `Kolonna ${index + 1}`);
   if (rawHeaders.length > MAX_COLUMNS) throw new Error(`Šajā prototipā atbalstām ne vairāk kā ${MAX_COLUMNS} kolonnas.`);
   const headers = makeUniqueHeaders(rawHeaders);
   const rows = matrix.slice(1, MAX_ROWS + 1).map((values) =>
-    Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""])),
+    Object.fromEntries(headers.map((header, index) => [header, String(values[index] ?? "").trim()])),
   );
   return { headers, rows, truncated: matrix.length - 1 > MAX_ROWS };
 }
