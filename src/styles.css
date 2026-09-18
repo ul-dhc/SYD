@@ -71,21 +71,15 @@ a {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 11px;
+  gap: 9px;
   text-decoration: none;
 }
 
 .brand-mark {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--white);
-  font-family: Georgia, serif;
-  font-size: 1.35rem;
-  font-style: italic;
+  display: block;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
 }
 
 .brand strong,
