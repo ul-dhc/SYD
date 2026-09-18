@@ -1,4 +1,4 @@
-# SYD — See Your Data
+# SYD – See Your Data
 
 > A guided data explorer for humanities research.
 
