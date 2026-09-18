@@ -131,7 +131,13 @@
               <p class="eyebrow">Atvērtā datu kopa</p>
               <h3 id="dataset-name">Datu kopa</h3>
             </div>
-            <button class="text-button" id="change-data" type="button">Mainīt datu avotu</button>
+            <div class="dataset-actions">
+              <label class="sheet-control" id="sheet-control" hidden>
+                <span>Darblapa</span>
+                <select id="sheet-select"></select>
+              </label>
+              <button class="text-button" id="change-data" type="button">Mainīt datu avotu</button>
+            </div>
           </div>
 
           <section class="analysis-section" aria-labelledby="overview-title">
@@ -140,12 +146,26 @@
               <p>Automātiskais novērtējums ir sākuma punkts – jūs saglabājat kontroli pār nozīmi.</p>
             </div>
             <div class="metrics" id="metrics"></div>
-            <div class="column-profile" id="column-profile"></div>
           </section>
 
-          <section class="analysis-section" aria-labelledby="question-title">
+          <section class="analysis-section structure-section" aria-labelledby="structure-title">
             <div class="section-heading">
-              <div><span class="section-number">02</span><div><p class="eyebrow">Pētnieciskais jautājums</p><h3 id="question-title">Ko vēlaties ieraudzīt?</h3></div></div>
+              <div><span class="section-number">02</span><div><p class="eyebrow">Datu struktūra</p><h3 id="structure-title">Pārbaudiet kolonnu nozīmi</h3></div></div>
+              <p>SYD piedāvā sākotnēju minējumu. Labojiet tipu vai izslēdziet kolonnas, kuras pašlaik nevēlaties izmantot.</p>
+            </div>
+            <div class="column-profile" id="column-profile"></div>
+            <div class="structure-actions">
+              <p id="structure-summary"></p>
+              <button class="button button-dark continue-button" id="confirm-structure" type="button">
+                Turpināt uz skatu
+                <i data-lucide="arrow-right" aria-hidden="true"></i>
+              </button>
+            </div>
+          </section>
+
+          <section class="analysis-section" id="question-section" aria-labelledby="question-title" hidden>
+            <div class="section-heading">
+              <div><span class="section-number">03</span><div><p class="eyebrow">Pētnieciskais jautājums</p><h3 id="question-title">Ko vēlaties ieraudzīt?</h3></div></div>
               <p>Izvēle palīdz SYD piedāvāt piemērotu skatu, nevis tikai diagrammu sarakstu.</p>
             </div>
             <fieldset class="question-options" id="question-options">
@@ -156,9 +176,9 @@
             </fieldset>
           </section>
 
-          <section class="analysis-section visualisation-section" aria-labelledby="visualisation-title">
+          <section class="analysis-section visualisation-section" id="visualisation-section" aria-labelledby="visualisation-title" hidden>
             <div class="section-heading">
-              <div><span class="section-number">03</span><div><p class="eyebrow">SYD ieteikums</p><h3 id="visualisation-title">Kategoriju biežuma skats</h3></div></div>
+              <div><span class="section-number">04</span><div><p class="eyebrow">SYD ieteikums</p><h3 id="visualisation-title">Kategoriju biežuma skats</h3></div></div>
               <p id="method-note">Piemērots, lai salīdzinātu vienas kolonnas vērtību biežumu.</p>
             </div>
             <div class="visual-controls" id="visual-controls">

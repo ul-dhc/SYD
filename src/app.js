@@ -1,10 +1,32 @@
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_ROWS = 10_000;
 const MAX_COLUMNS = 100;
+const COLUMN_TYPES = [
+  ["teksts", "Teksts"],
+  ["kategorija", "Kategorija"],
+  ["skaitlis", "Skaitlis"],
+  ["gads", "Gads"],
+  ["datums", "Datums"],
+  ["vieta", "Vieta"],
+  ["persona", "Persona"],
+  ["identifikators", "Identifikators"],
+  ["vairākas vērtības", "Vairākas vērtības"],
+  ["tukšs", "Tukšs lauks"],
+];
 
 window.lucide?.createIcons();
 
-const state = { rows: [], columns: [], profiles: [], name: "", question: "categories" };
+const state = {
+  rows: [],
+  columns: [],
+  profiles: [],
+  name: "",
+  question: "categories",
+  workbook: null,
+  workbookName: "",
+  sheetName: "",
+  structureConfirmed: false,
+};
 
 const elements = {
   demoButton: document.querySelector("#load-demo"),
@@ -14,9 +36,15 @@ const elements = {
   analysis: document.querySelector("#analysis"),
   datasetName: document.querySelector("#dataset-name"),
   changeData: document.querySelector("#change-data"),
+  sheetControl: document.querySelector("#sheet-control"),
+  sheetSelect: document.querySelector("#sheet-select"),
   metrics: document.querySelector("#metrics"),
   columnProfile: document.querySelector("#column-profile"),
+  structureSummary: document.querySelector("#structure-summary"),
+  confirmStructure: document.querySelector("#confirm-structure"),
+  questionSection: document.querySelector("#question-section"),
   questionOptions: document.querySelector("#question-options"),
+  visualisationSection: document.querySelector("#visualisation-section"),
   visualTitle: document.querySelector("#visualisation-title"),
   methodNote: document.querySelector("#method-note"),
   fieldControl: document.querySelector("#field-control"),
@@ -31,6 +59,9 @@ const elements = {
 elements.demoButton?.addEventListener("click", loadDemo);
 elements.fileInput?.addEventListener("change", loadFile);
 elements.changeData?.addEventListener("click", resetWorkspace);
+elements.sheetSelect?.addEventListener("change", () => openXlsxSheet(elements.sheetSelect.value));
+elements.columnProfile?.addEventListener("change", updateColumnStructure);
+elements.confirmStructure?.addEventListener("click", confirmStructure);
 elements.questionOptions?.addEventListener("change", (event) => {
   if (event.target.name !== "question") return;
   state.question = event.target.value;
@@ -79,14 +110,27 @@ async function openXlsxDataset(file) {
   const workbook = window.XLSX.read(await file.arrayBuffer(), { cellDates: true });
   const [sheetName] = workbook.SheetNames;
   if (!sheetName) throw new Error("XLSX failā nav nevienas darblapas.");
-  const worksheet = workbook.Sheets[sheetName];
-  const matrix = window.XLSX.utils.sheet_to_json(worksheet, {
-    header: 1,
-    raw: false,
-    defval: "",
-    blankrows: false,
-  });
-  openDataset(matrixToDataset(matrix), `${file.name} · ${sheetName}`);
+  state.workbook = workbook;
+  state.workbookName = file.name;
+  elements.sheetSelect.innerHTML = workbook.SheetNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+  openXlsxSheet(sheetName);
+}
+
+function openXlsxSheet(sheetName) {
+  try {
+    const worksheet = state.workbook?.Sheets[sheetName];
+    if (!worksheet) throw new Error("Izvēlēto XLSX darblapu neizdevās nolasīt.");
+    const matrix = window.XLSX.utils.sheet_to_json(worksheet, {
+      header: 1,
+      raw: false,
+      defval: "",
+      blankrows: false,
+    });
+    state.sheetName = sheetName;
+    openDataset(matrixToDataset(matrix), `${state.workbookName} · ${sheetName}`, { preserveWorkbook: true });
+  } catch (error) {
+    setStatus(error.message || "Izvēlēto XLSX darblapu neizdevās nolasīt.", true);
+  }
 }
 
 function detectDelimiter(text) {
@@ -151,22 +195,30 @@ function makeUniqueHeaders(headers) {
   });
 }
 
-function openDataset(dataset, name) {
+function openDataset(dataset, name, options = {}) {
+  if (!options.preserveWorkbook) {
+    state.workbook = null;
+    state.workbookName = "";
+    state.sheetName = "";
+  }
   state.rows = dataset.rows;
   state.columns = dataset.headers;
   state.name = name;
   state.profiles = state.columns.map(profileColumn);
-  state.question = chooseInitialQuestion();
+  state.structureConfirmed = false;
   elements.datasetName.textContent = name;
+  elements.sheetControl.hidden = !state.workbook;
+  if (state.workbook) elements.sheetSelect.value = state.sheetName;
   elements.sourceGrid.hidden = true;
   elements.analysis.hidden = false;
-  document.querySelector(`input[name="question"][value="${state.question}"]`).checked = true;
+  elements.questionSection.hidden = true;
+  elements.visualisationSection.hidden = true;
   setActiveStep(1);
   renderOverview();
-  configureVisualisation();
+  renderStructure();
   setStatus(dataset.truncated
     ? `Drošības ierobežojuma dēļ parādām pirmos ${MAX_ROWS.toLocaleString("lv-LV")} ierakstus.`
-    : `${state.rows.length.toLocaleString("lv-LV")} ieraksti nolasīti lokāli. Dati nav nosūtīti uz serveri.`);
+    : `${state.rows.length.toLocaleString("lv-LV")} ieraksti nolasīti lokāli. Pārbaudiet kolonnu tipus, pirms izvēlaties skatu.`);
   elements.analysis.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -174,12 +226,16 @@ function profileColumn(column) {
   const values = state.rows.map((row) => String(row[column] ?? "").trim());
   const nonEmpty = values.filter(Boolean);
   const unique = new Set(nonEmpty);
-  return { name: column, type: inferType(column, nonEmpty, unique.size), missing: values.length - nonEmpty.length, unique: unique.size, samples: [...unique].slice(0, 3) };
+  const type = inferType(column, nonEmpty, unique.size);
+  return { name: column, type, suggestedType: type, included: type !== "tukšs", missing: values.length - nonEmpty.length, unique: unique.size, samples: [...unique].slice(0, 3) };
 }
 
 function inferType(column, values, uniqueCount) {
   if (!values.length) return "tukšs";
   const name = column.toLocaleLowerCase("lv");
+  if (/vieta|pilsēta|valsts|adrese|place|city|country|location/.test(name)) return "vieta";
+  if (/persona|autors|vārds|uzvārds|person|author|creator/.test(name)) return "persona";
+  if (/^(id|nr\.?|numurs)$|identifikator/.test(name)) return "identifikators";
   const years = values.filter((value) => /^(1[0-9]{3}|20[0-9]{2}|2100)$/.test(value));
   if (years.length / values.length >= 0.8 || /gads|year/.test(name)) return "gads";
   const numbers = values.filter((value) => Number.isFinite(Number(value.replace(",", "."))));
@@ -192,17 +248,75 @@ function inferType(column, values, uniqueCount) {
 }
 
 function chooseInitialQuestion() {
-  if (state.profiles.some((profile) => profile.type === "kategorija")) return "categories";
-  if (state.profiles.some((profile) => ["gads", "datums"].includes(profile.type))) return "time";
+  const includedProfiles = state.profiles.filter((profile) => profile.included);
+  if (includedProfiles.some((profile) => ["kategorija", "vieta", "persona", "vairākas vērtības"].includes(profile.type))) return "categories";
+  if (includedProfiles.some((profile) => ["gads", "datums"].includes(profile.type))) return "time";
   return "records";
 }
 
 function renderOverview() {
   const missing = state.profiles.reduce((sum, profile) => sum + profile.missing, 0);
   const totalCells = state.rows.length * state.columns.length;
-  const timeFields = state.profiles.filter((profile) => ["gads", "datums"].includes(profile.type)).length;
+  const timeFields = state.profiles.filter((profile) => profile.included && ["gads", "datums"].includes(profile.type)).length;
   elements.metrics.innerHTML = [metricMarkup(state.rows.length, "ieraksti"), metricMarkup(state.columns.length, "kolonnas"), metricMarkup(totalCells ? `${Math.round((missing / totalCells) * 100)}%` : "0%", "tukšu šūnu"), metricMarkup(timeFields, "laika lauki")].join("");
-  elements.columnProfile.innerHTML = `<div class="profile-row" aria-hidden="true"><span>Kolonna</span><span>SYD tips</span><span>Tukšs / unikāls</span><span>Piemēri</span></div>${state.profiles.map((profile) => `<div class="profile-row"><strong>${escapeHtml(profile.name)}</strong><span class="type-pill">${escapeHtml(profile.type)}</span><span>${profile.missing} / ${profile.unique}</span><span class="profile-sample" title="${escapeHtml(profile.samples.join(", "))}">${escapeHtml(profile.samples.join(" · ") || "–")}</span></div>`).join("")}`;
+}
+
+function renderStructure() {
+  elements.columnProfile.innerHTML = `<div class="profile-row" aria-hidden="true"><span>Lietot</span><span>Kolonna</span><span>Datu tips</span><span>Tukšs / unikāls</span><span>Piemēri</span></div>${state.profiles.map((profile, index) => structureRowMarkup(profile, index)).join("")}`;
+  updateStructureSummary();
+}
+
+function structureRowMarkup(profile, index) {
+  const options = COLUMN_TYPES.map(([value, label]) => `<option value="${escapeHtml(value)}"${profile.type === value ? " selected" : ""}>${escapeHtml(label)}</option>`).join("");
+  return `<div class="profile-row${profile.included ? "" : " is-excluded"}" data-profile-index="${index}"><label class="profile-use"><input type="checkbox" data-profile-action="include"${profile.included ? " checked" : ""} aria-label="Izmantot kolonnu ${escapeHtml(profile.name)}"><span>Jā</span></label><strong>${escapeHtml(profile.name)}</strong><select class="profile-type" data-profile-action="type" aria-label="Kolonnas ${escapeHtml(profile.name)} datu tips"${profile.included ? "" : " disabled"}>${options}</select><span>${profile.missing} / ${profile.unique}</span><span class="profile-sample" title="${escapeHtml(profile.samples.join(", "))}">${escapeHtml(profile.samples.join(" · ") || "–")}</span></div>`;
+}
+
+function updateColumnStructure(event) {
+  const control = event.target.closest("[data-profile-action]");
+  const row = control?.closest("[data-profile-index]");
+  if (!control || !row) return;
+  const profile = state.profiles[Number(row.dataset.profileIndex)];
+  if (!profile) return;
+
+  if (control.dataset.profileAction === "include") {
+    profile.included = control.checked;
+    row.classList.toggle("is-excluded", !profile.included);
+    const typeSelect = row.querySelector("[data-profile-action='type']");
+    typeSelect.disabled = !profile.included;
+  } else {
+    profile.type = control.value;
+  }
+
+  state.structureConfirmed = false;
+  updateStructureSummary();
+  renderOverview();
+  if (!elements.questionSection.hidden) configureVisualisation();
+}
+
+function updateStructureSummary() {
+  const included = state.profiles.filter((profile) => profile.included);
+  const excludedCount = state.profiles.length - included.length;
+  const changedCount = state.profiles.filter((profile) => profile.type !== profile.suggestedType).length;
+  const parts = [`Analīzē tiks izmantotas ${included.length} no ${state.profiles.length} kolonnām.`];
+  if (excludedCount) parts.push(excludedCount === 1 ? "1 kolonna izslēgta." : `${excludedCount} kolonnas izslēgtas.`);
+  if (changedCount) parts.push(changedCount === 1 ? "1 tipam veikts labojums." : `${changedCount} tipiem veikti labojumi.`);
+  elements.structureSummary.textContent = parts.join(" ");
+  elements.confirmStructure.disabled = included.length === 0;
+}
+
+function confirmStructure() {
+  if (!state.profiles.some((profile) => profile.included)) {
+    setStatus("Izvēlieties vismaz vienu kolonnu, ko izmantot analīzē.", true);
+    return;
+  }
+  state.structureConfirmed = true;
+  state.question = chooseInitialQuestion();
+  document.querySelector(`input[name="question"][value="${state.question}"]`).checked = true;
+  elements.questionSection.hidden = false;
+  elements.visualisationSection.hidden = false;
+  configureVisualisation();
+  setStatus("Datu struktūra apstiprināta. Tagad izvēlieties pētniecisko jautājumu.");
+  elements.questionSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function metricMarkup(value, label) {
@@ -222,13 +336,14 @@ function configureVisualisation() {
 }
 
 function getQuestionConfig() {
+  const includedProfiles = state.profiles.filter((profile) => profile.included);
   if (state.question === "time") {
-    const fields = state.profiles.filter((profile) => ["gads", "datums", "skaitlis"].includes(profile.type));
+    const fields = includedProfiles.filter((profile) => ["gads", "datums", "skaitlis"].includes(profile.type));
     return { title: "Laika sadalījuma skats", note: fields.length ? "Piemērots, lai pamanītu koncentrāciju un pārtraukumus laikā." : "Šajā tabulā SYD neatrada drošu laika lauku.", interpretation: "Ierakstu skaits konkrētā periodā var atspoguļot gan vēsturisku aktivitāti, gan avotu saglabāšanos un datu vākšanas izvēles.", fields };
   }
   if (state.question === "records") return { title: "Ierakstu pārlūks", note: "Piemērots avota ierakstu pārbaudei pirms analīzes.", interpretation: "Tabulas priekšskatījums nemaina avota vērtības. Šajā prototipā tiek parādīti pirmie 50 ieraksti.", fields: [] };
-  const categoryPriority = { "kategorija": 0, "vairākas vērtības": 1, "teksts": 2 };
-  const fields = state.profiles
+  const categoryPriority = { "kategorija": 0, "vieta": 1, "persona": 1, "vairākas vērtības": 2, "teksts": 3 };
+  const fields = includedProfiles
     .filter((profile) => Object.hasOwn(categoryPriority, profile.type))
     .sort((first, second) => categoryPriority[first.type] - categoryPriority[second.type]);
   return { title: "Kategoriju biežuma skats", note: fields.length ? "Piemērots, lai salīdzinātu vienas kolonnas vērtību biežumu." : "Šajā tabulā SYD neatrada kategorisku lauku.", interpretation: "Biežums parāda ierakstu skaitu, nevis parādības nozīmīgumu. Tukšās vērtības tiek parādītas atsevišķi.", fields };
@@ -260,12 +375,16 @@ function compareTimeValues(first, second) {
 }
 
 function renderRecords() {
-  elements.visualOutput.innerHTML = `<div class="records-wrap"><table class="records-table"><thead><tr>${state.columns.map((column) => `<th scope="col">${escapeHtml(column)}</th>`).join("")}</tr></thead><tbody>${state.rows.slice(0, 50).map((row) => `<tr>${state.columns.map((column) => `<td>${escapeHtml(row[column] || "–")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const columns = state.profiles.filter((profile) => profile.included).map((profile) => profile.name);
+  elements.visualOutput.innerHTML = `<div class="records-wrap"><table class="records-table"><thead><tr>${columns.map((column) => `<th scope="col">${escapeHtml(column)}</th>`).join("")}</tr></thead><tbody>${state.rows.slice(0, 50).map((row) => `<tr>${columns.map((column) => `<td>${escapeHtml(row[column] || "–")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 
 function resetWorkspace() {
-  Object.assign(state, { rows: [], columns: [], profiles: [], name: "", question: "categories" });
+  Object.assign(state, { rows: [], columns: [], profiles: [], name: "", question: "categories", workbook: null, workbookName: "", sheetName: "", structureConfirmed: false });
   elements.analysis.hidden = true;
+  elements.questionSection.hidden = true;
+  elements.visualisationSection.hidden = true;
+  elements.sheetControl.hidden = true;
   elements.sourceGrid.hidden = false;
   setStatus("");
   setActiveStep(0);
