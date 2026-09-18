@@ -1,5 +1,9 @@
 # Application source
 
-This directory is reserved for the SYD application source.
+This directory contains the dependency-free browser application:
 
-Implementation will begin after the universal data model and SYD Library module manifest have been documented. The source should remain independent of NSRD-specific concepts such as people, artefacts, formats, groups, and institutions; those belong in an example project configuration.
+- `app.js` handles local CSV/TSV parsing, profiling, question selection, and visualisation;
+- `styles.css` defines the landing page and shared visual language;
+- `workspace.css` defines the data workflow and result views.
+
+The source remains independent of NSRD-specific concepts such as people, artefacts, formats, groups, and institutions; those belong in example project configurations.

@@ -21,7 +21,16 @@ The project combines three parts:
 
 ## Current status
 
-The project is in its concept and architecture phase. The existing NSRD/Seque visualisation will become the first demonstration project, but the original NSRD repository remains separate and unchanged.
+The first browser-based prototype is implemented. It provides:
+
+- a public SYD landing page;
+- local CSV and TSV import with a 5 MB safety limit;
+- automatic column type, missing-value, and uniqueness summaries;
+- guided selection between category, time, and record-exploration views;
+- a category-frequency view, a time-distribution view, and a record browser;
+- a synthetic demonstration dataset for trying the workflow.
+
+Imported research data stays in the browser and is not uploaded to SYD or sent to an LLM. The existing NSRD/Seque visualisation remains a separate project and will later become a SYD demonstration configuration.
 
 The complete product concept is available in [docs/product-concept.md](docs/product-concept.md).
 
@@ -34,10 +43,10 @@ The complete product concept is available in [docs/product-concept.md](docs/prod
 ```text
 docs/       Product, methodology, and technical documentation
 examples/   Demonstration datasets and SYD project configurations
-src/        Future application source code
+src/        Application JavaScript and styles
 ```
 
-The application source and example datasets will be added only after the universal SYD data model and module format have been defined.
+The root `index.html` is intentionally dependency-free so the prototype can be hosted directly with GitHub Pages.
 
 ## Initial development sequence
 

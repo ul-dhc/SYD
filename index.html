@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="lv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f0e7" />
+    <meta
+      name="description"
+      content="SYD ir vadīta humanitāro datu izpētes un vizualizācijas vide."
+    />
+    <meta property="og:title" content="SYD — See Your Data" />
+    <meta
+      property="og:description"
+      content="A guided data explorer for humanities research."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://dhc.lu.lv/seeyourdata/" />
+    <meta property="og:image" content="https://dhc.lu.lv/seeyourdata/assets/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SYD — See Your Data" />
+    <meta name="twitter:description" content="A guided data explorer for humanities research." />
+    <meta name="twitter:image" content="https://dhc.lu.lv/seeyourdata/assets/og.png" />
+    <title>SYD — See Your Data</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="./src/workspace.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">Pāriet uz darba vidi</a>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="SYD sākums">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span>
+          <strong>SYD</strong>
+          <small>See Your Data</small>
+        </span>
+      </a>
+      <nav aria-label="Galvenā navigācija">
+        <a href="#workspace">Izpētīt datus</a>
+        <a href="#principles">Kā tas darbojas</a>
+        <a href="./docs/product-concept.md">Koncepcija</a>
+      </nav>
+      <span class="prototype-label">Prototips 0.1</span>
+    </header>
+
+    <main id="top">
+      <section class="intro" aria-labelledby="intro-title">
+        <div class="intro-copy">
+          <p class="eyebrow">Humanitāro datu izpētes vide</p>
+          <h1 id="intro-title">Sāciet ar jautājumu.<br />Ieraugiet savus datus.</h1>
+          <p class="intro-lead">
+            SYD palīdz izprast tabulas struktūru un izvēlēties piemērotu
+            vizualizāciju — bez programmēšanas un bez datu nosūtīšanas uz serveri.
+          </p>
+        </div>
+        <aside class="privacy-note" aria-label="Privātuma princips">
+          <span class="privacy-icon" aria-hidden="true">⌁</span>
+          <div>
+            <strong>Jūsu dati paliek šajā pārlūkā.</strong>
+            <p>Fails netiek augšupielādēts SYD vai nosūtīts LLM.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="workspace" id="workspace" aria-labelledby="workspace-title">
+        <div class="workspace-heading">
+          <div>
+            <p class="eyebrow">SYD Explorer</p>
+            <h2 id="workspace-title">Ko vēlaties izpētīt?</h2>
+          </div>
+          <ol class="stepper" aria-label="Darba soļi">
+            <li class="is-active" aria-current="step"><span>1</span> Dati</li>
+            <li><span>2</span> Struktūra</li>
+            <li><span>3</span> Skats</li>
+          </ol>
+        </div>
+
+        <div class="source-grid">
+          <article class="source-card source-card-primary">
+            <span class="source-number">01</span>
+            <div>
+              <h3>Izmēģināt ar piemēru</h3>
+              <p>
+                Neliela kultūras notikumu datu kopa par gadiem, vietām un
+                kategorijām. Drošākais veids, kā iepazīt SYD.
+              </p>
+              <button class="button button-dark" id="load-demo" type="button">
+                Atvērt piemēra datus
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </article>
+
+          <article class="source-card">
+            <span class="source-number">02</span>
+            <div>
+              <h3>Atvērt savu CSV vai TSV</h3>
+              <p>
+                Fails tiks nolasīts tikai jūsu ierīcē. Pirmajā prototipā
+                atbalstām tabulas ar virsrakstu rindu.
+              </p>
+              <label class="button button-light" for="file-input">
+                Izvēlēties failu
+                <span aria-hidden="true">＋</span>
+              </label>
+              <input id="file-input" type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" />
+            </div>
+          </article>
+
+          <article class="source-card source-card-muted" aria-disabled="true">
+            <span class="source-number">03</span>
+            <div>
+              <div class="card-heading-row">
+                <h3>Publisks Google Sheet</h3>
+                <span class="coming-soon">Drīzumā</span>
+              </div>
+              <p>
+                Pieslēdziet tabulu, kuru esat apzināti publicējis tīmeklī, un
+                izveidojiet kopīgojamu tiešsaistes skatu.
+              </p>
+            </div>
+          </article>
+        </div>
+
+        <p class="status-message" id="status-message" role="status" aria-live="polite"></p>
+
+        <div class="analysis" id="analysis" hidden>
+          <div class="dataset-bar">
+            <div>
+              <p class="eyebrow">Atvērtā datu kopa</p>
+              <h3 id="dataset-name">Datu kopa</h3>
+            </div>
+            <button class="text-button" id="change-data" type="button">Mainīt datu avotu</button>
+          </div>
+
+          <section class="analysis-section" aria-labelledby="overview-title">
+            <div class="section-heading">
+              <div><span class="section-number">01</span><div><p class="eyebrow">Datu pārskats</p><h3 id="overview-title">Ko SYD atrada tabulā</h3></div></div>
+              <p>Automātiskais novērtējums ir sākuma punkts — jūs saglabājat kontroli pār nozīmi.</p>
+            </div>
+            <div class="metrics" id="metrics"></div>
+            <div class="column-profile" id="column-profile"></div>
+          </section>
+
+          <section class="analysis-section" aria-labelledby="question-title">
+            <div class="section-heading">
+              <div><span class="section-number">02</span><div><p class="eyebrow">Pētnieciskais jautājums</p><h3 id="question-title">Ko vēlaties ieraudzīt?</h3></div></div>
+              <p>Izvēle palīdz SYD piedāvāt piemērotu skatu, nevis tikai diagrammu sarakstu.</p>
+            </div>
+            <fieldset class="question-options" id="question-options">
+              <legend class="visually-hidden">Izvēlieties izpētes virzienu</legend>
+              <label><input type="radio" name="question" value="categories" checked /><span><strong>Salīdzināt kategorijas</strong><small>Kuras vērtības parādās biežāk, un kā tās savstarpēji atšķiras?</small></span></label>
+              <label><input type="radio" name="question" value="time" /><span><strong>Pētīt pārmaiņas laikā</strong><small>Kad ieraksti koncentrējas, un kuros periodos redzamas izmaiņas?</small></span></label>
+              <label><input type="radio" name="question" value="records" /><span><strong>Pārlūkot ierakstus</strong><small>Atrast, salīdzināt un pārbaudīt atsevišķus avota ierakstus.</small></span></label>
+            </fieldset>
+          </section>
+
+          <section class="analysis-section visualisation-section" aria-labelledby="visualisation-title">
+            <div class="section-heading">
+              <div><span class="section-number">03</span><div><p class="eyebrow">SYD ieteikums</p><h3 id="visualisation-title">Kategoriju biežuma skats</h3></div></div>
+              <p id="method-note">Piemērots, lai salīdzinātu vienas kolonnas vērtību biežumu.</p>
+            </div>
+            <div class="visual-controls" id="visual-controls">
+              <label id="field-control"><span>Izmantotā kolonna</span><select id="field-select"></select></label>
+              <label id="limit-control"><span>Parādīt</span><select id="limit-select"><option value="5">5 biežākās vērtības</option><option value="10" selected>10 biežākās vērtības</option><option value="20">20 biežākās vērtības</option></select></label>
+            </div>
+            <div class="visual-output" id="visual-output" aria-live="polite"></div>
+            <aside class="interpretation" id="interpretation"><strong>Interpretācijas piezīme</strong><p>Biežums parāda ierakstu skaitu, nevis parādības nozīmīgumu.</p></aside>
+          </section>
+        </div>
+      </section>
+
+      <section class="principles" id="principles" aria-labelledby="principles-title">
+        <div>
+          <p class="eyebrow">Kā SYD palīdz</p>
+          <h2 id="principles-title">No tabulas līdz interpretējamam skatam</h2>
+        </div>
+        <div class="principle-list">
+          <article>
+            <span>01</span>
+            <h3>Saprot struktūru</h3>
+            <p>Nosaka kolonnu tipus, tukšās vērtības un datu diapazonus.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Iesaka metodi</h3>
+            <p>Saista pētniecisko jautājumu ar piemērotu SYD Library moduli.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Parāda ierobežojumus</h3>
+            <p>Saglabā neskaidrību un paskaidro, ko no skata nevar secināt.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p><strong>SYD — See Your Data</strong></p>
+      <p>LU Digitālo humanitāro zinātņu centrs</p>
+    </footer>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
