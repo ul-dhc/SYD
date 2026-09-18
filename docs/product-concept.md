@@ -43,6 +43,6 @@ Privātiem datiem paredzēta lokāla izpēte un rezultāta saglabāšana savā i
 
 ## SYD galvenais princips
 
-SYD neaizstāj pētnieka zināšanas un neinterpretē avotus viņa vietā. Rīks palīdz pārskatīt datu struktūru, izvēlēties piemērotu vizualizāciju un pamanīt sakarības, vienlaikus atgādinot par datu kvalitāti, nenoteiktību un secinājumu robežām.
+SYD rīks neaizstāj pētnieka zināšanas un neinterpretē avotus. Tas palīdz pamanīt sakarības, vienlaikus saglabājot pētnieka kontroli pār datiem, to nozīmi un secinājumiem.
 
 SYD mērķis ir padarīt humanitāro zinātņu datu izpēti pieejamāku, nezaudējot pētnieka kontroli pār datiem un to nozīmi.
