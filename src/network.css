@@ -250,6 +250,12 @@
 .syd-network-inspector strong { color: var(--foreground); font-size: .625rem; font-weight: 500; white-space: nowrap; }
 .syd-network-inspector span { min-width: 0; }
 
+@container (max-width: 900px) {
+  .syd-network-toolbar-tools { align-items: flex-end; flex-wrap: wrap; }
+  .syd-network-view-options { width: 100%; flex-wrap: wrap; }
+  .syd-network-tools { margin-left: auto; }
+}
+
 @keyframes network-edge-rain { to { stroke-dashoffset: -100; } }
 @keyframes network-edge-echo { 0%, 100% { opacity: .34; } 35% { opacity: 1; } }
 @keyframes network-edge-wave { 0%, 18%, 100% { filter: brightness(1); } 8% { filter: brightness(2.2) saturate(1.35); } }

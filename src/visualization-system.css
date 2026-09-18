@@ -6,6 +6,7 @@
   --viz-magenta: #cf0060;
   --viz-teal: #02a49f;
   --viz-amber: #f4a000;
+  --viz-cream: #fce8cd;
   --viz-paper: #fffaf4;
   --viz-card: #fffdf9;
   --viz-ink: #10243b;
@@ -28,11 +29,6 @@
   background: var(--viz-paper);
   color: var(--viz-ink);
 }
-
-.explorer-shell[data-viz-palette="neon"] { --viz-blue:#1e90ff;--viz-orange:#00c96c;--viz-green:#b100ff;--viz-magenta:#ff0099;--viz-teal:#00bfb6;--viz-amber:#00ff85; }
-.explorer-shell[data-viz-palette="autumn"] { --viz-blue:#9b6f35;--viz-orange:#ff6f61;--viz-green:#8b6e3f;--viz-magenta:#b44d76;--viz-teal:#d68b3c;--viz-amber:#daa520; }
-.explorer-shell[data-viz-palette="pastel"] { --viz-blue:#86c7cc;--viz-orange:#ffc1cc;--viz-green:#9bd8c6;--viz-magenta:#d49abd;--viz-teal:#a8dadc;--viz-amber:#b39cd0; }
-.explorer-shell[data-viz-palette="vivid"] { --viz-blue:#673ab7;--viz-orange:#ff5722;--viz-green:#6a9f28;--viz-magenta:#b51d84;--viz-teal:#008f9c;--viz-amber:#e6c900; }
 
 .explorer-filter-panel {
   min-width: 0;
@@ -86,7 +82,7 @@
 .clear-filters-button:disabled { color: var(--viz-muted); cursor: default; opacity: .55; }
 .clear-filters-button svg { width: 15px; height: 15px; }
 
-.explorer-visual-panel { min-width: 0; background: var(--viz-paper); }
+.explorer-visual-panel { min-width: 0; container-type: inline-size; background: var(--viz-paper); }
 .explorer-visual-panel .visual-controls { margin: 0; padding: 16px 18px; border-bottom: 1px solid var(--viz-line); background: var(--viz-card); }
 .explorer-visual-panel .visual-controls label > span { color: var(--viz-muted); }
 .explorer-visual-panel .visual-controls select { min-height: 40px; border-color: var(--viz-line); background: #fff; color: var(--viz-ink); }
@@ -279,9 +275,20 @@
 .analytics-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding: 10px 0; border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: .625rem; }
 .analytics-footer strong { color: inherit; font-weight: 500; }
 .analytics-footer button { margin-left: 0; color: var(--primary); font-weight: 650; }
-.analytics-surface.animation-rain .analytics-bar > i > b { background-image: linear-gradient(100deg, transparent 18%, color-mix(in srgb, var(--viz-amber) 42%, transparent) 48%, transparent 78%); background-size: 180% 100%; animation: analytics-rain 3.4s linear calc(var(--chart-index, 0) * -.18s) infinite; }
-.analytics-surface.animation-rain .artifact-column > i > b { background-image: linear-gradient(0deg, transparent 18%, color-mix(in srgb, var(--viz-amber) 42%, transparent) 48%, transparent 78%); background-size: 100% 180%; animation: analytics-rain-vertical 3.4s linear calc(var(--chart-index, 0) * -.18s) infinite; }
-.analytics-surface.animation-wave .analytics-bar > i > b, .analytics-surface.animation-wave .artifact-column > i > b { animation: analytics-wave 4.8s ease-in-out calc(var(--chart-index, 0) * -.13s) infinite; }
+.analytics-surface.animation-rain .analytics-bar > i > b { background-image: linear-gradient(100deg, transparent 18%, color-mix(in srgb, var(--viz-cream) 72%, transparent) 48%, transparent 78%); background-size: 180% 100%; animation: analytics-rain 3.4s linear calc(var(--animation-index, 0) * -.18s) infinite; }
+.analytics-surface.animation-rain .artifact-column > i > b { background-image: linear-gradient(0deg, transparent 18%, color-mix(in srgb, var(--viz-cream) 72%, transparent) 48%, transparent 78%); background-size: 100% 180%; animation: analytics-rain-vertical 3.4s linear calc(var(--animation-index, 0) * -.18s) infinite; }
+.analytics-surface.animation-rain .donut-segment { animation: analytics-donut-rain 3.8s ease-in-out calc(var(--animation-index, 0) * -.22s) infinite; }
+.analytics-surface.animation-rain .matrix-cell:not(.is-diagonal):not(:disabled) { animation: analytics-rain-cell 3.8s ease-in-out calc(var(--animation-index, 0) * -.12s) infinite; }
+.explorer-shell .analytics-surface.animation-wave .analytics-bar,
+.explorer-shell .analytics-surface.animation-wave .artifact-column { animation: none; }
+.analytics-surface.animation-wave .analytics-bar > i > b,
+.analytics-surface.animation-wave .artifact-column > i > b,
+.analytics-surface.animation-wave .donut-segment,
+.analytics-surface.animation-wave .matrix-cell:not(.is-diagonal):not(:disabled) { animation: analytics-wave 4.8s ease-in-out calc(var(--animation-index, 0) * -.13s) infinite; }
+.explorer-shell .analytics-surface.animation-echo button[aria-pressed="true"] { animation: none; }
+.analytics-surface.animation-echo.has-selection .analytics-bar.is-active > i > b,
+.analytics-surface.animation-echo.has-selection .artifact-column.is-active > i > b,
+.analytics-surface.animation-echo.has-selection .matrix-cell.is-active { animation: analytics-echo 1.4s cubic-bezier(.2,.72,.28,1) 1 both; }
 .analytics-surface.style-pencil { --foreground: #292724; --muted-foreground: #6b665e; --background: #fffdf7; --card: #fffdf7; --border: #9d978e; color: var(--foreground); font-family: "Bradley Hand", "Segoe Print", cursive; }
 .analytics-surface.style-pencil .analytics-summary > div, .analytics-surface.style-pencil .analytics-chart { border-color: color-mix(in srgb, var(--foreground) 68%, transparent); border-radius: 3px; background-color: #fffdf7; background-image: radial-gradient(circle, color-mix(in srgb, var(--foreground) 11%, transparent) .55px, transparent .7px); background-size: 12px 12px; box-shadow: 1px 1px 0 color-mix(in srgb, var(--foreground) 20%, transparent); }
 .analytics-surface.style-pencil .analytics-chart:nth-child(even) { transform: rotate(.08deg); }
@@ -290,7 +297,10 @@
 .analytics-surface.style-pencil .analytics-bar > i > b, .analytics-surface.style-pencil .artifact-column > i > b { background-color: transparent; background-image: repeating-linear-gradient(164deg, transparent 0 2px, var(--chart-color) 2px 3px, transparent 3px 5px); opacity: .9; }
 @keyframes analytics-rain { from { background-position: 150% 0; } to { background-position: -150% 0; } }
 @keyframes analytics-rain-vertical { from { background-position: 0 150%; } to { background-position: 0 -150%; } }
+@keyframes analytics-donut-rain { 0%,70%,100% { opacity: .62; } 35% { opacity: 1; filter: brightness(1.35) saturate(1.15); } }
+@keyframes analytics-rain-cell { 0%,70%,100% { filter: brightness(1); } 35% { filter: brightness(1.45) saturate(1.15); } }
 @keyframes analytics-wave { 0%,18%,100% { filter: brightness(1); } 8% { filter: brightness(1.7) saturate(1.22); } }
+@keyframes analytics-echo { 0%,100% { transform: scaleX(1); filter: brightness(1); } 35% { transform: scaleX(1.045); filter: brightness(1.7) saturate(1.3); } }
 
 @media (max-width: 720px) {
   .analytics-grid { grid-template-columns: 1fr; }

@@ -1,17 +1,10 @@
 import { createBipartiteGraph, createMultilayerGraph, recordIdsForSelection } from "./visualization-data.js?v=10";
+import { NETWORK_COLOR_KEYS, VISUALIZATION_PALETTES, visualizationPalette } from "./visualization-palettes.js?v=1";
 
 const WIDTH = 900;
 const HEIGHT = 570;
 const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 };
 const TYPE_ORDER = ["artifact", "person", "format", "group", "institution"];
-
-const PALETTES = {
-  archive: { label: "Arhīvs", colors: ["#114b94", "#c83f00", "#2b783f", "#cf0060", "#02a49f"] },
-  neon: { label: "Neons", colors: ["#1e90ff", "#00c96c", "#ff0099", "#b100ff", "#00bfb6"] },
-  autumn: { label: "Dzintars", colors: ["#daa520", "#ff6f61", "#ff4500", "#b44d76", "#9b6f35"] },
-  pastel: { label: "Pastelis", colors: ["#86c7cc", "#ffc1cc", "#b39cd0", "#d49abd", "#9bd8c6"] },
-  vivid: { label: "Košums", colors: ["#673ab7", "#ff5722", "#e6c900", "#b51d84", "#008f9c"] },
-};
 
 export function renderInteractiveNetwork(container, data, sharedState, onStateChange = () => {}) {
   const availableRoleIds = data.roleIds.filter((id) => data.model.roleById.has(id));
@@ -28,6 +21,8 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
     driftClock: 0,
     lastFrame: null,
     animationFrame: null,
+    elasticTargets: new Map(),
+    elasticVelocities: new Map(),
   };
 
   container.innerHTML = shellMarkup(data, sharedState);
@@ -109,7 +104,21 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
       const graphNode = state.graph.nodes.find((node) => node.id === nodeElement.dataset.nodeId);
       if (!graphNode) return;
       const origin = sharedState.manualPositions.get(graphNode.id) || { x: graphNode.x, y: graphNode.y };
-      state.drag = { type: "node", id: graphNode.id, start: graphPoint(displayPoint), origin: { ...origin }, moved: false };
+      const linkedEdges = sharedState.layout === "force"
+        ? state.graph.edges.filter((edge) => edge.source === graphNode.id || edge.target === graphNode.id)
+        : [];
+      const maxWeight = Math.max(1, ...linkedEdges.map((edge) => edge.weight));
+      const positions = new Map([[graphNode.id, { ...origin }]]);
+      const strengths = new Map([[graphNode.id, 1]]);
+      linkedEdges.forEach((edge) => {
+        const neighborId = edge.source === graphNode.id ? edge.target : edge.source;
+        const neighbor = state.graph.nodes.find((node) => node.id === neighborId);
+        if (!neighbor) return;
+        positions.set(neighborId, { ...(sharedState.manualPositions.get(neighborId) || { x: neighbor.x, y: neighbor.y }) });
+        strengths.set(neighborId, .16 + Math.sqrt(edge.weight / maxWeight) * .18);
+      });
+      positions.forEach((position, id) => sharedState.manualPositions.set(id, { ...position }));
+      state.drag = { type: "node", id: graphNode.id, start: graphPoint(displayPoint), positions, strengths, moved: false };
     } else state.drag = { type: "pan", start: displayPoint, origin: { ...sharedState.pan }, moved: false };
     svg.setPointerCapture(event.pointerId);
     svg.classList.add("is-dragging");
@@ -123,10 +132,21 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
     const dy = point.y - state.drag.start.y;
     state.drag.moved ||= Math.hypot(dx, dy) > 2;
     if (state.drag.type === "pan") sharedState.pan = { x: state.drag.origin.x + dx, y: state.drag.origin.y + dy };
-    else sharedState.manualPositions.set(state.drag.id, {
-      x: clamp(state.drag.origin.x + dx, 24, WIDTH - 24),
-      y: clamp(state.drag.origin.y + dy, 24, HEIGHT - 24),
-    });
+    else {
+      const draggedStart = state.drag.positions.get(state.drag.id);
+      sharedState.manualPositions.set(state.drag.id, {
+        x: clamp(draggedStart.x + dx, 24, WIDTH - 24),
+        y: clamp(draggedStart.y + dy, 24, HEIGHT - 24),
+      });
+      state.drag.positions.forEach((position, id) => {
+        if (id === state.drag.id) return;
+        const strength = state.drag.strengths.get(id) || .2;
+        state.elasticTargets.set(id, {
+          x: clamp(position.x + dx * strength, 24, WIDTH - 24),
+          y: clamp(position.y + dy * strength, 24, HEIGHT - 24),
+        });
+      });
+    }
     updateGraphPositions();
   });
 
@@ -148,7 +168,11 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
   }, { passive: false });
 
   function rebuildGraph(clearManualPositions = false) {
-    if (clearManualPositions) sharedState.manualPositions = new Map();
+    if (clearManualPositions) {
+      sharedState.manualPositions = new Map();
+      state.elasticTargets.clear();
+      state.elasticVelocities.clear();
+    }
     const visibleRoleIds = availableRoleIds.filter((id) => sharedState.visibleRoleIds.has(id));
     const rawGraph = sharedState.layout === "bipartite"
       ? createBipartiteGraph(data.model, sharedState.bipartiteRoleIds[0], sharedState.bipartiteRoleIds[1], data.records)
@@ -180,11 +204,18 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
 
   function finishDrag(event) {
     if (!state.drag) return;
+    const interaction = state.drag;
     const wasMoved = state.drag.moved;
     state.drag = wasMoved ? { moved: true } : null;
     svg.classList.remove("is-dragging");
     if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
     if (wasMoved) setTimeout(() => { state.drag = null; }, 0);
+    if (!wasMoved && interaction.type === "pan" && sharedState.selectedNodeIds.length) {
+      sharedState.selectedNodeIds = [];
+      commitState();
+      render();
+      return;
+    }
     commitState();
   }
 
@@ -268,6 +299,8 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
     sharedState.pan = { x: 0, y: 0 };
     sharedState.selectedNodeIds = [];
     sharedState.manualPositions = new Map();
+    state.elasticTargets.clear();
+    state.elasticVelocities.clear();
   }
 
   function commitState() {
@@ -322,11 +355,12 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
     const nodes = displayNodes.map((node) => nodeMarkup(node, selected, activeIds)).join("");
     svg.className.baseVal = ["syd-network-svg", "network-canvas", sharedState.layout !== "force" ? "is-structured" : "", sharedState.layout === "bipartite" ? "is-bipartite" : "", selected.size ? "has-selection" : "", `animation-${sharedState.animation}`, `style-${sharedState.style}`, sharedState.motionFrozen ? "is-motion-paused" : "", state.drag ? "is-dragging" : ""].filter(Boolean).join(" ");
     svg.style.setProperty("--graph-label-scale", sharedState.labelScale);
-    root.style.setProperty("--node-person", PALETTES[sharedState.palette].colors[0]);
-    root.style.setProperty("--node-artifact", PALETTES[sharedState.palette].colors[1]);
-    root.style.setProperty("--node-format", PALETTES[sharedState.palette].colors[2]);
-    root.style.setProperty("--node-group", PALETTES[sharedState.palette].colors[3]);
-    root.style.setProperty("--node-institution", PALETTES[sharedState.palette].colors[4]);
+    const colors = visualizationPalette(sharedState.palette).colors;
+    root.style.setProperty("--node-person", colors.blue);
+    root.style.setProperty("--node-artifact", colors.orange);
+    root.style.setProperty("--node-format", colors.green);
+    root.style.setProperty("--node-group", colors.magenta);
+    root.style.setProperty("--node-institution", colors.teal);
     graphLayer.innerHTML = `${definitionsMarkup()}<g class="network-edges">${edges}</g><g class="network-nodes">${nodes}</g>`;
   }
 
@@ -440,17 +474,37 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
 
   function startDriftLoop() {
     const tick = (time) => {
+      let shouldPaint = updateElasticPositions();
       if (sharedState.layout === "force" && !sharedState.motionFrozen) {
         if (state.lastFrame === null) state.lastFrame = time;
         if (time - state.lastFrame >= 32) {
           state.driftClock += Math.min(50, time - state.lastFrame);
           state.lastFrame = time;
-          updateGraphPositions();
+          shouldPaint = true;
         }
       } else state.lastFrame = null;
+      if (shouldPaint) updateGraphPositions();
       if (root.isConnected) state.animationFrame = requestAnimationFrame(tick);
     };
     state.animationFrame = requestAnimationFrame(tick);
+  }
+
+  function updateElasticPositions() {
+    if (!state.elasticTargets.size) return false;
+    state.elasticTargets.forEach((target, id) => {
+      const position = sharedState.manualPositions.get(id) || target;
+      const velocity = state.elasticVelocities.get(id) || { x: 0, y: 0 };
+      const vx = (velocity.x + (target.x - position.x) * .085) * .76;
+      const vy = (velocity.y + (target.y - position.y) * .085) * .76;
+      const next = { x: position.x + vx, y: position.y + vy };
+      sharedState.manualPositions.set(id, next);
+      state.elasticVelocities.set(id, { x: vx, y: vy });
+      if (state.drag?.type !== "node" && Math.hypot(target.x - next.x, target.y - next.y) < .12 && Math.hypot(vx, vy) < .08) {
+        state.elasticTargets.delete(id);
+        state.elasticVelocities.delete(id);
+      }
+    });
+    return true;
   }
 }
 
@@ -560,7 +614,7 @@ function shellMarkup(data, state) {
   const roles = data.roleIds.map((id) => data.model.roleById.get(id)).filter(Boolean);
   const options = roles.map((role) => `<option value="${escapeHtml(role.id)}">${escapeHtml(role.label)}</option>`).join("");
   const roleButtons = roles.map((role) => `<button type="button" class="syd-layer-chip" data-network-role="${escapeHtml(role.id)}" aria-pressed="${state.visibleRoleIds.has(role.id)}"><i class="node-swatch ${role.paletteSlot}"></i>${escapeHtml(role.label)}</button>`).join("");
-  const palettes = Object.entries(PALETTES).map(([id, palette]) => `<button class="syd-palette" type="button" data-palette="${id}" aria-label="Palete ${palette.label}" title="${palette.label}"><span>${palette.colors.map((color) => `<i style="--swatch:${color}"></i>`).join("")}</span></button>`).join("");
+  const palettes = Object.entries(VISUALIZATION_PALETTES).map(([id, palette]) => `<button class="syd-palette" type="button" data-palette="${id}" aria-label="Palete ${palette.label}" title="${palette.label}"><span>${NETWORK_COLOR_KEYS.map((key) => `<i style="--swatch:${palette.colors[key]}"></i>`).join("")}</span></button>`).join("");
   return `<section class="syd-network" data-palette="${state.palette}" data-style="${state.style}" data-animation="${state.animation}"><div class="syd-network-toolbar network-toolbar network-toolbar-secondary" aria-label="Tīkla iestatījumi"><div class="syd-network-toolbar-tools toolbar-tools"><div class="syd-network-view-options network-view-options"><label class="syd-network-select network-select"><span>Izkārtojums</span><select data-network-layout><option value="force">Brīvais</option><option value="hierarchical">Hierarhisks</option><option value="bipartite">Divdaļīgs</option></select></label><div class="syd-bipartite-options" hidden><label class="syd-network-select network-select"><span>Kreisā puse</span><select data-network-left-role>${options}</select></label><label class="syd-network-select network-select"><span>Labā puse</span><select data-network-right-role>${options}</select></label></div><label class="syd-network-select network-select"><span>Stils</span><select data-network-style><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label><label class="syd-network-select network-select"><span>Kustība</span><select data-network-animation><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label><fieldset class="syd-network-palettes"><legend>Palete</legend><div>${palettes}</div></fieldset></div><div class="syd-network-tools network-controls" aria-label="Tīkla darbības"><button type="button" data-network-action="motion" aria-label="Apturēt kustību" title="Apturēt kustību"><i data-lucide="pause"></i></button><button type="button" data-network-action="labels" class="label-mode-button" aria-label="Mainīt nosaukumu režīmu" title="Mainīt nosaukumu režīmu"><i data-lucide="eye"></i></button><button type="button" data-network-action="label-size" class="graph-text-size-button" aria-label="Mainīt nosaukumu izmēru" title="Mainīt nosaukumu izmēru">A+</button><button type="button" data-network-action="scatter" class="node-scatter-button" aria-label="Izkliedēt mezglus" title="Izkliedēt mezglus"><i data-lucide="scatter-chart"></i></button><button type="button" data-network-action="zoom-out" aria-label="Attālināt" title="Attālināt"><i data-lucide="zoom-out"></i></button><output aria-label="Mērogs">100%</output><button type="button" data-network-action="zoom-in" aria-label="Pietuvināt" title="Pietuvināt"><i data-lucide="zoom-in"></i></button><button type="button" data-network-action="reset" aria-label="Atjaunot novietojumu" title="Atjaunot novietojumu"><i data-lucide="rotate-ccw"></i></button></div></div><fieldset class="syd-network-layers"><legend>Datu slāņi</legend><div>${roleButtons}</div></fieldset><div class="syd-network-legend legend" aria-label="Leģenda"></div></div><div class="syd-network-canvas network-stage"><svg class="syd-network-svg network-canvas" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="Daudzslāņu saikņu tīkls"><rect class="network-hit-area" width="${WIDTH}" height="${HEIGHT}"></rect><g class="syd-network-graph"></g></svg></div><div class="syd-network-inspector network-hint" aria-live="polite"></div><p class="visually-hidden syd-network-status" aria-live="polite"></p></section>`;
 }
 

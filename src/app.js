@@ -1,5 +1,6 @@
 import { SYD_LIBRARY } from "./library.js";
-import { renderInteractiveNetwork } from "./network.js?v=10";
+import { renderInteractiveNetwork } from "./network.js?v=14";
+import { CHART_SWATCH_KEYS, visualizationPalette } from "./visualization-palettes.js?v=1";
 import {
   createBipartiteGraph,
   createCooccurrenceData,
@@ -740,6 +741,8 @@ function saveChartPreferences() {
 
 function applyChartPreferences() {
   if (!elements.explorerShell) return;
+  const palette = visualizationPalette(state.visualization.palette);
+  Object.entries(palette.colors).forEach(([key, value]) => elements.explorerShell.style.setProperty(`--viz-${key}`, value));
   elements.explorerShell.dataset.vizPalette = state.visualization.palette;
   elements.explorerShell.dataset.vizStyle = state.visualization.style;
   elements.explorerShell.dataset.vizAnimation = state.visualization.animation;
@@ -747,6 +750,8 @@ function applyChartPreferences() {
   elements.chartAnimation.value = state.visualization.animation;
   elements.chartPaletteButtons.forEach((button) => {
     const active = button.dataset.chartPalette === state.visualization.palette;
+    const option = visualizationPalette(button.dataset.chartPalette);
+    button.querySelector("span").innerHTML = CHART_SWATCH_KEYS.map((key) => `<i style="--swatch:${option.colors[key]}"></i>`).join("");
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
   });
@@ -903,7 +908,7 @@ function renderVisualisation() {
   const limit = Number(elements.limitSelect.value);
   const sorted = [...counts.entries()].sort((a, b) => config.renderer === "time" ? compareTimeValues(a[0], b[0]) : b[1] - a[1] || a[0].localeCompare(b[0], "lv")).slice(0, limit);
   const max = Math.max(...sorted.map(([, count]) => count), 1);
-  elements.visualOutput.innerHTML = sorted.length ? `<div class="bar-chart" role="img" aria-label="${escapeHtml(elements.visualTitle.textContent)} kolonnai ${escapeHtml(field)}">${sorted.map(([label, count], index) => `<button class="bar-row" type="button" data-filter-field="${escapeHtml(field)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${filterValueForColumn(field) === label}"><span class="bar-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span><span class="bar-track" aria-hidden="true"><span class="bar-fill" style="width:${(count / max) * 100}%;--chart-index:${index}"></span></span><strong class="bar-value">${count}</strong></button>`).join("")}</div>` : `<div class="empty-state"><p>Šai filtru kombinācijai datu nav.</p></div>`;
+  elements.visualOutput.innerHTML = sorted.length ? `<div class="bar-chart" role="img" aria-label="${escapeHtml(elements.visualTitle.textContent)} kolonnai ${escapeHtml(field)}">${sorted.map(([label, count], index) => `<button class="bar-row" type="button" data-filter-field="${escapeHtml(field)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${filterValueForColumn(field) === label}"><span class="bar-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span><span class="bar-track" aria-hidden="true"><span class="bar-fill" style="width:${(count / max) * 100}%;--animation-index:${index}"></span></span><strong class="bar-value">${count}</strong></button>`).join("")}</div>` : `<div class="empty-state"><p>Šai filtru kombinācijai datu nav.</p></div>`;
 }
 
 function recordsForCurrentSelection(filteredRecords) {

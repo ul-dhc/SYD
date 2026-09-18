@@ -6,6 +6,7 @@ This directory contains the dependency-free browser application:
 - `library.js` contains the first reusable SYD Library module registry and recommendation metadata, including the bipartite network;
 - `visualization-data.js` adapts approved table columns to generic records, roles, nodes, edges, and co-occurrence matrices;
 - `visualization-state.js` contains the shared filters, selection, layout, palette, style, motion, and viewport state used by every visualisation;
+- `visualization-palettes.js` is the single source for the five NSRD-derived data palettes used by the network, overview, and palette controls;
 - `network.js` provides the reusable, domain-neutral multilayer network engine with the NSRD force, hierarchical, and bipartite layout principles;
 - `styles.css` defines the landing page and shared visual language;
 - `workspace.css` defines only the data preparation and question-selection workflow;

@@ -24,7 +24,7 @@
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
     <link rel="stylesheet" href="./src/styles.css" />
     <link rel="stylesheet" href="./src/workspace.css?v=10" />
-    <link rel="stylesheet" href="./src/visualization.css?v=1" />
+    <link rel="stylesheet" href="./src/visualization.css?v=4" />
   </head>
   <body>
     <a class="skip-link" href="#workspace">Pāriet uz darba vidi</a>
@@ -262,11 +262,11 @@
                     <label><span>Kustība</span><select id="chart-animation-select"><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label>
                     <fieldset class="chart-palette-options">
                       <legend>Palete</legend>
-                      <button type="button" data-chart-palette="archive" aria-label="Arhīvs" title="Arhīvs"><span><i style="--swatch:#114b94"></i><i style="--swatch:#c83f00"></i><i style="--swatch:#2b783f"></i><i style="--swatch:#cf0060"></i></span></button>
-                      <button type="button" data-chart-palette="neon" aria-label="Neons" title="Neons"><span><i style="--swatch:#1e90ff"></i><i style="--swatch:#00c96c"></i><i style="--swatch:#ff0099"></i><i style="--swatch:#b100ff"></i></span></button>
-                      <button type="button" data-chart-palette="autumn" aria-label="Dzintars" title="Dzintars"><span><i style="--swatch:#daa520"></i><i style="--swatch:#ff6f61"></i><i style="--swatch:#ff4500"></i><i style="--swatch:#9b6f35"></i></span></button>
-                      <button type="button" data-chart-palette="pastel" aria-label="Pastelis" title="Pastelis"><span><i style="--swatch:#86c7cc"></i><i style="--swatch:#ffc1cc"></i><i style="--swatch:#b39cd0"></i><i style="--swatch:#d49abd"></i></span></button>
-                      <button type="button" data-chart-palette="vivid" aria-label="Košums" title="Košums"><span><i style="--swatch:#673ab7"></i><i style="--swatch:#ff5722"></i><i style="--swatch:#e6c900"></i><i style="--swatch:#b51d84"></i></span></button>
+                      <button type="button" data-chart-palette="archive" aria-label="Arhīvs" title="Arhīvs"><span aria-hidden="true"></span></button>
+                      <button type="button" data-chart-palette="neon" aria-label="Neons" title="Neons"><span aria-hidden="true"></span></button>
+                      <button type="button" data-chart-palette="autumn" aria-label="Dzintars" title="Dzintars"><span aria-hidden="true"></span></button>
+                      <button type="button" data-chart-palette="pastel" aria-label="Pastelis" title="Pastelis"><span aria-hidden="true"></span></button>
+                      <button type="button" data-chart-palette="vivid" aria-label="Košums" title="Košums"><span aria-hidden="true"></span></button>
                     </fieldset>
                   </div>
                   <label id="field-control"><span>Izmantotā kolonna</span><select id="field-select"></select></label>
@@ -323,6 +323,6 @@
 
     <script src="./src/vendor/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/lucide@0.503.0/dist/umd/lucide.min.js"></script>
-    <script type="module" src="./src/app.js?v=12"></script>
+    <script type="module" src="./src/app.js?v=17"></script>
   </body>
 </html>

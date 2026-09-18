@@ -110,3 +110,7 @@ Pārbaudīts, ka matricas pāra atlase pāriet uz tīklu un detaļu paneli, bet 
 7. solī pēc kopīgās vizualizāciju sistēmas pievienots `visualization-brand.css`. Tas sasaista vizualizācijas ar SYD pamatlapas virsmu, teksta, līniju un akcenta krāsām.
 
 Pielāgojumu slānis nemaina datu paletes, mezglu formas, diagrammu ģeometriju, animācijas, izkārtojumu vai responsīvo uzvedību. Līdz ar to NSRD vizualizāciju principi paliek vienoti, bet SYD identitāte ir pārvaldāma vienā atsevišķā failā.
+
+## NSRD paritātes pārbaude
+
+8. solī visi tīkla, pārskata, filtru, stilu, kustību un responsīvās uzvedības principi pārbaudīti pret NSRD. Pārbaudes kontrolsaraksts, novērstās atšķirības un pārlūka pārbaudes rezultāti apkopoti failā `docs/nsrd-parity-audit.md`.

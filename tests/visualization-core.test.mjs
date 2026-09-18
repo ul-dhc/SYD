@@ -18,6 +18,7 @@ import {
   setVisualizationOption,
   toggleNodeSelection,
 } from "../src/visualization-state.js";
+import { NETWORK_COLOR_KEYS, VISUALIZATION_PALETTES } from "../src/visualization-palettes.js";
 
 const rows = [
   { ID: "A-1", Persona: "Anna", Kategorija: "Mūzika; Lasījums", Vieta: "Rīga" },
@@ -31,6 +32,14 @@ const profiles = [
   { name: "Kategorija", type: "vairākas vērtības", included: true },
   { name: "Vieta", type: "vieta", included: true },
 ];
+
+test("NSRD paletes izmanto vienu kopīgu krāsu avotu", () => {
+  assert.deepEqual(Object.keys(VISUALIZATION_PALETTES), ["archive", "neon", "autumn", "pastel", "vivid"]);
+  assert.deepEqual(NETWORK_COLOR_KEYS.map((key) => VISUALIZATION_PALETTES.neon.colors[key]), ["#1e90ff", "#00ff85", "#b100ff", "#ff0099", "#00d9cf"]);
+  assert.equal(VISUALIZATION_PALETTES.autumn.colors.blue, "#9b5c38");
+  assert.equal(VISUALIZATION_PALETTES.pastel.colors.green, "#b4cfa4");
+  assert.equal(VISUALIZATION_PALETTES.vivid.colors.amber, "#ffcf00");
+});
 
 test("adapteris izveido lomas un stabilus ierakstu identifikatorus", () => {
   const model = createVisualizationModel(rows, profiles);
