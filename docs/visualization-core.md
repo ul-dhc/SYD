@@ -74,3 +74,21 @@ Animācija maina esošo SVG elementu koordinātas, nevis atkārtoti pārbūvē v
 Detaļu saturs tiek veidots no ģeneriskajām datu lomām un ierakstu identifikatoriem. Tajā nav NSRD laukiem piesaistītu nosaukumu vai nosacījumu.
 
 Pārlūkā pārbaudīti 360, 480, 820 un 1280 px platumi. Visos platumos dokumenta platums sakrīt ar pārlūka loga platumu, un filtri, atlase un paneļu pārslēgšana darbojas ar reāliem klikšķiem.
+
+## NSRD analītiskais pārskats
+
+5. solī darbvietai pievienots kopīgs `Tīkls` un `Pārskats` pārslēgs un NSRD principiem atbilstošs analītiskais pārskats:
+
+- kopsavilkums parāda pašreizējās atlases ierakstus, izvēlētās lomas unikālās vērtības un atlasīto mezglu skaitu;
+- SVG riņķa diagramma rāda pirmās piemērotās kategoriskās lomas sadalījumu;
+- horizontālās joslas rāda otras piemērotās lomas biežākās vērtības;
+- ierakstu diagramma salīdzina ierakstus pēc tiem piesaistīto vērtību skaita;
+- kopparādīšanās matrica skaita vienas lomas vērtības, kas sastopamas kopā vienā ierakstā;
+- mobilajā versijā matrica tiek aizstāta ar biežāko pāru sarakstu;
+- klikšķis pārskatā maina to pašu mezglu atlasi, ko izmanto tīkls un detaļu panelis;
+- pāra atlase izmanto nosacījumu `visi`, tāpēc tiek parādīti ieraksti, kuros sastopamas abas vērtības;
+- filtri, paletes, standarta vai zīmuļa stils un četri kustības režīmi darbojas abos darbvietas režīmos.
+
+Kopparādīšanās aprēķins atrodas `createCooccurrenceData()` datu kodolā. Tas saņem ģenerisku lomas identifikatoru, tāpēc nav piesaistīts personām vai kādam konkrētam datu kopas laukam.
+
+Pārbaudīts, ka matricas pāra atlase pāriet uz tīklu un detaļu paneli, bet kopīgais filtrs pārrēķina visas pārskata diagrammas. Datora matrica un mobilais pāru saraksts pārbaudīts 360, 480, 820 un 1280 px platumā bez horizontālas lapas pārplūdes.

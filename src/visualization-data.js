@@ -139,6 +139,32 @@ export function recordIdsForSelection(graph, selectedNodeIds, logic = "any") {
   return new Set(recordSets.flatMap((set) => [...set]));
 }
 
+export function createCooccurrenceData(model, roleId, records = model?.records || [], limit = 12) {
+  const role = model?.roleById.get(roleId);
+  if (!role) return null;
+  const valueCounts = new Map();
+  records.forEach((record) => new Set(record.fields[role.id] || []).forEach((value) => valueCounts.set(value, (valueCounts.get(value) || 0) + 1)));
+  const values = [...valueCounts]
+    .sort((first, second) => second[1] - first[1] || first[0].localeCompare(second[0], "lv", { numeric: true }))
+    .slice(0, limit)
+    .map(([value]) => value);
+  const visibleValues = new Set(values);
+  const pairCounts = new Map();
+  records.forEach((record) => {
+    const recordValues = [...new Set(record.fields[role.id] || [])].filter((value) => visibleValues.has(value));
+    recordValues.forEach((first, index) => recordValues.slice(index + 1).forEach((second) => {
+      const key = [first, second].sort().join("\u0000");
+      pairCounts.set(key, (pairCounts.get(key) || 0) + 1);
+    }));
+  });
+  const maxPair = Math.max(1, ...pairCounts.values());
+  const topPairs = [...pairCounts.entries()]
+    .sort((first, second) => second[1] - first[1] || first[0].localeCompare(second[0], "lv"))
+    .slice(0, 8)
+    .map(([key, count]) => ({ values: key.split("\u0000"), count }));
+  return { role, values, valueCounts, pairCounts, maxPair, topPairs };
+}
+
 export function normalizeSearchText(value) {
   return String(value ?? "").toLocaleLowerCase("lv-LV").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }

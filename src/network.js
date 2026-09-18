@@ -1,4 +1,4 @@
-import { createBipartiteGraph, createMultilayerGraph, recordIdsForSelection } from "./visualization-data.js?v=9";
+import { createBipartiteGraph, createMultilayerGraph, recordIdsForSelection } from "./visualization-data.js?v=10";
 
 const WIDTH = 900;
 const HEIGHT = 570;

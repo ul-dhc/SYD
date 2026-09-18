@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   createBipartiteGraph,
+  createCooccurrenceData,
   createMultilayerGraph,
   createVisualizationModel,
   filterVisualizationRecords,
@@ -86,6 +87,17 @@ test("daudzslāņu grafiks un jebkurš vai visi atlase atgriež pareizos ierakst
   const riga = graph.nodes.find((node) => node.label === "Rīga");
   assert.deepEqual([...recordIdsForSelection(graph, [anna.id, riga.id], "all")], ["record:A-1"]);
   assert.deepEqual([...recordIdsForSelection(graph, [anna.id, riga.id], "any")].sort(), ["record:A-1", "record:A-2", "record:A-3"]);
+});
+
+test("kopparādīšanās matrica skaita vienā ierakstā sastopamus vērtību pārus", () => {
+  const model = createVisualizationModel(rows, profiles);
+  const categoryRole = roleForColumn(model, "Kategorija");
+  const matrix = createCooccurrenceData(model, categoryRole.id);
+  assert.deepEqual(matrix.values, ["Lasījums", "Mūzika"]);
+  assert.equal(matrix.valueCounts.get("Mūzika"), 2);
+  assert.equal(matrix.valueCounts.get("Lasījums"), 2);
+  assert.equal(matrix.pairCounts.get("Lasījums\u0000Mūzika"), 1);
+  assert.deepEqual(matrix.topPairs, [{ values: ["Lasījums", "Mūzika"], count: 1 }]);
 });
 
 test("vienotais stāvoklis pārbauda izvēles un pielāgojas lomu izmaiņām", () => {

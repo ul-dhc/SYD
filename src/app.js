@@ -1,13 +1,14 @@
 import { SYD_LIBRARY } from "./library.js";
-import { renderInteractiveNetwork } from "./network.js?v=9";
+import { renderInteractiveNetwork } from "./network.js?v=10";
 import {
   createBipartiteGraph,
+  createCooccurrenceData,
   createMultilayerGraph,
   createVisualizationModel,
   filterVisualizationRecords,
   recordIdsForSelection,
   roleForColumn,
-} from "./visualization-data.js?v=9";
+} from "./visualization-data.js?v=10";
 import {
   clearVisualizationFilters,
   createVisualizationState,
@@ -15,6 +16,7 @@ import {
   reconcileVisualizationState,
   setRoleFilter,
   setVisualizationOption,
+  toggleNodeSelection,
   visualizationPreferences,
 } from "./visualization-state.js?v=9";
 
@@ -99,6 +101,8 @@ const elements = {
   closeDetailPanel: document.querySelector("#close-detail-panel"),
   filterCountBadge: document.querySelector("#filter-count-badge"),
   selectionCountBadge: document.querySelector("#selection-count-badge"),
+  workspaceViewSwitcher: document.querySelector("#workspace-view-switcher"),
+  workspaceViewButtons: [...document.querySelectorAll("[data-workspace-view]")],
   explorerShell: document.querySelector(".explorer-shell"),
   chartSettings: document.querySelector("#chart-settings"),
   chartStyle: document.querySelector("#chart-style-select"),
@@ -160,24 +164,52 @@ elements.toggleDetailPanel?.addEventListener("click", () => toggleWorkspacePanel
 elements.closeFilterPanel?.addEventListener("click", () => setWorkspacePanel("filters", false));
 elements.closeDetailPanel?.addEventListener("click", () => setWorkspacePanel("details", false));
 elements.panelScrim?.addEventListener("click", closeWorkspacePanels);
+elements.workspaceViewSwitcher?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-workspace-view]");
+  if (!button) return;
+  setVisualizationOption(state.visualization, "view", button.dataset.workspaceView);
+  renderVisualisation();
+});
 elements.chartStyle?.addEventListener("change", () => {
   setVisualizationOption(state.visualization, "style", elements.chartStyle.value);
   saveChartPreferences();
   applyChartPreferences();
+  renderVisualisation();
 });
 elements.chartAnimation?.addEventListener("change", () => {
   setVisualizationOption(state.visualization, "animation", elements.chartAnimation.value);
   saveChartPreferences();
   applyChartPreferences();
+  renderVisualisation();
 });
 elements.chartPaletteButtons.forEach((button) => button.addEventListener("click", () => {
   setVisualizationOption(state.visualization, "palette", button.dataset.chartPalette);
   saveChartPreferences();
   applyChartPreferences();
+  renderVisualisation();
 }));
 elements.openVisualisationFocus?.addEventListener("click", openVisualisationFocus);
 elements.closeVisualisationFocus?.addEventListener("click", closeVisualisationFocus);
 elements.visualOutput?.addEventListener("click", (event) => {
+  const selectedPair = event.target.closest("[data-select-first][data-select-second]");
+  if (selectedPair) {
+    state.visualization.selectionLogic = "all";
+    state.visualization.selectedNodeIds = [selectedPair.dataset.selectFirst, selectedPair.dataset.selectSecond];
+    renderVisualisation();
+    return;
+  }
+  const selectedNode = event.target.closest("[data-select-node]");
+  if (selectedNode) {
+    state.visualization.selectionLogic = "any";
+    toggleNodeSelection(state.visualization, selectedNode.dataset.selectNode, event.shiftKey);
+    renderVisualisation();
+    return;
+  }
+  if (event.target.closest("[data-clear-selection]")) {
+    state.visualization.selectedNodeIds = [];
+    renderVisualisation();
+    return;
+  }
   const target = event.target.closest("[data-filter-field][data-filter-value]");
   if (!target) return;
   setFilterForColumn(target.dataset.filterField, target.dataset.filterValue);
@@ -770,18 +802,27 @@ function configureVisualisation() {
   elements.methodNote.textContent = config.note;
   elements.interpretation.textContent = config.interpretation;
   updateVisualisationIdentity(config);
-  elements.chartSettings.hidden = ["network", "records"].includes(config.renderer);
-  elements.fieldControl.hidden = ["records", "overview", "network"].includes(config.renderer);
-  elements.secondFieldControl.hidden = config.renderer !== "comparison";
-  elements.limitControl.hidden = ["records", "overview", "comparison", "network"].includes(config.renderer);
+  if (config.renderer === "network") state.visualization.view = "network";
+  if (config.renderer === "overview") state.visualization.view = "overview";
+  updateWorkspaceViewSwitcher(config);
   elements.fieldSelect.innerHTML = config.fields.map((profile) => `<option value="${escapeHtml(profile.name)}">${escapeHtml(profile.name)} · ${profile.type}</option>`).join("");
   elements.secondFieldSelect.innerHTML = elements.fieldSelect.innerHTML;
-  if (["comparison", "network"].includes(config.renderer) && config.fields.length > 1) {
+  if (["comparison", "network", "overview"].includes(config.renderer) && config.fields.length > 1) {
     elements.secondFieldSelect.value = config.fields[1].name;
   }
   setActiveStep(2);
   renderVisualisation();
   syncVisualisationFocus();
+}
+
+function updateWorkspaceViewSwitcher(config) {
+  const supportsWorkspaceViews = ["network", "overview"].includes(config.renderer);
+  elements.workspaceViewSwitcher.hidden = !supportsWorkspaceViews;
+  elements.workspaceViewButtons.forEach((button) => {
+    const active = button.dataset.workspaceView === state.visualization.view;
+    button.setAttribute("aria-selected", String(active));
+    button.tabIndex = active ? 0 : -1;
+  });
 }
 
 function visualisationHashId(config) {
@@ -829,14 +870,24 @@ function syncVisualisationFocus() {
 function renderVisualisation() {
   const config = state.recommendations.find((module) => module.id === state.moduleId);
   if (!config) return;
-  elements.visualOutput.classList.toggle("network-output", config.renderer === "network");
-  const rows = getFilteredRows();
+  const effectiveRenderer = ["network", "overview"].includes(config.renderer) ? state.visualization.view : config.renderer;
+  updateWorkspaceViewSwitcher(config);
+  elements.interpretation.textContent = effectiveRenderer === "overview"
+    ? "Vizualizācijas rāda datu struktūru, biežumu un kopparādīšanos. Šie rādītāji paši par sevi neparāda parādību nozīmīgumu vai cēloņsakarību."
+    : config.interpretation;
+  elements.chartSettings.hidden = ["network", "records"].includes(effectiveRenderer);
+  elements.fieldControl.hidden = ["records", "overview", "network"].includes(effectiveRenderer);
+  elements.secondFieldControl.hidden = effectiveRenderer !== "comparison";
+  elements.limitControl.hidden = ["records", "overview", "comparison", "network"].includes(effectiveRenderer);
+  elements.visualOutput.classList.toggle("network-output", effectiveRenderer === "network");
+  const filteredRecords = filterVisualizationRecords(state.visualizationModel, state.visualization);
+  const rows = filteredRecords.map((record) => record.sourceRow);
   updateFilterSummary(rows);
-  renderWorkspaceDetails(filterVisualizationRecords(state.visualizationModel, state.visualization));
-  if (config.renderer === "overview") return renderDataOverview(rows);
-  if (config.renderer === "records") return renderRecords();
-  if (config.renderer === "comparison") return renderComparison();
-  if (config.renderer === "network") return renderNetwork();
+  renderWorkspaceDetails(filteredRecords);
+  if (effectiveRenderer === "overview") return renderDataOverview(recordsForCurrentSelection(filteredRecords));
+  if (effectiveRenderer === "records") return renderRecords();
+  if (effectiveRenderer === "comparison") return renderComparison();
+  if (effectiveRenderer === "network") return renderNetwork();
   const field = elements.fieldSelect.value;
   if (!field) {
     elements.visualOutput.innerHTML = `<div class="empty-state"><p>Šai vizualizācijai vajadzīgā tipa kolonna nav atrasta.<br>Izvēlieties citu pētniecisko jautājumu.</p></div>`;
@@ -855,57 +906,84 @@ function renderVisualisation() {
   elements.visualOutput.innerHTML = sorted.length ? `<div class="bar-chart" role="img" aria-label="${escapeHtml(elements.visualTitle.textContent)} kolonnai ${escapeHtml(field)}">${sorted.map(([label, count], index) => `<button class="bar-row" type="button" data-filter-field="${escapeHtml(field)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${filterValueForColumn(field) === label}"><span class="bar-label" title="${escapeHtml(label)}">${escapeHtml(label)}</span><span class="bar-track" aria-hidden="true"><span class="bar-fill" style="width:${(count / max) * 100}%;--chart-index:${index}"></span></span><strong class="bar-value">${count}</strong></button>`).join("")}</div>` : `<div class="empty-state"><p>Šai filtru kombinācijai datu nav.</p></div>`;
 }
 
-function renderDataOverview(rows) {
-  if (!rows.length) {
+function recordsForCurrentSelection(filteredRecords) {
+  if (!state.visualization.selectedNodeIds.length) return filteredRecords;
+  const graph = createMultilayerGraph(state.visualizationModel, state.visualizationModel.roles.map((role) => role.id), filteredRecords);
+  const recordIds = recordIdsForSelection(graph, state.visualization.selectedNodeIds, state.visualization.selectionLogic);
+  return filteredRecords.filter((record) => recordIds.has(record.id));
+}
+
+function renderDataOverview(records) {
+  if (!records.length) {
     elements.visualOutput.innerHTML = `<div class="empty-state"><p>Šai filtru kombinācijai datu nav.</p><button class="text-button" type="button" data-clear-dashboard-filters>Notīrīt filtrus</button></div>`;
     elements.visualOutput.querySelector("[data-clear-dashboard-filters]")?.addEventListener("click", clearVisualFilters);
     return;
   }
 
-  const categoricalProfiles = state.profiles.filter((profile) => profile.included && ["kategorija", "vieta", "persona", "vairākas vērtības"].includes(profile.type));
-  const timeProfile = state.profiles.find((profile) => profile.included && ["gads", "datums"].includes(profile.type));
-  const donutProfile = categoricalProfiles[0];
-  const barsProfile = categoricalProfiles.find((profile) => profile.name !== donutProfile?.name) || donutProfile;
-  const columnProfile = timeProfile || categoricalProfiles.find((profile) => ![donutProfile?.name, barsProfile?.name].includes(profile.name));
-  const uniqueEntities = donutProfile ? new Set(rows.flatMap((row) => valuesForProfile(row, donutProfile))).size : 0;
-  const activeFilters = state.visualization.filters.size + (state.visualization.searchQuery.trim() ? 1 : 0);
+  const model = state.visualizationModel;
+  const graph = createMultilayerGraph(model, model.roles.map((role) => role.id), records);
+  const categoricalRoles = model.roles.filter((role) => ["kategorija", "vieta", "persona", "vairākas vērtības", "teksts"].includes(role.valueType));
+  const primaryRole = categoricalRoles.find((role) => role.valueType !== "teksts") || categoricalRoles[0] || model.roles[0];
+  const secondaryRole = categoricalRoles.find((role) => role.id !== primaryRole?.id && role.valueType !== "teksts") || primaryRole;
+  const associationRole = categoricalRoles.find((role) => records.some((record) => new Set(record.fields[role.id]).size > 1)) || categoricalRoles.find((role) => role.multiValue) || secondaryRole;
+  const titleRole = model.roles.find((role) => role.valueType === "identifikators") || model.roles.find((role) => role.valueType === "teksts") || model.roles[0];
+  const primaryCounts = roleCounts(records, primaryRole).slice(0, 6);
+  const secondaryCounts = roleCounts(records, secondaryRole).slice(0, 8);
+  const uniquePrimary = new Set(records.flatMap((record) => record.fields[primaryRole?.id] || [])).size;
+  const selected = new Set(state.visualization.selectedNodeIds);
   const colors = ["var(--viz-blue)", "var(--viz-orange)", "var(--viz-green)", "var(--viz-magenta)", "var(--viz-teal)", "var(--viz-amber)"];
-  const donutCounts = donutProfile ? fieldCounts(rows, donutProfile).slice(0, 6) : [];
-  const donutTotal = Math.max(1, donutCounts.reduce((sum, [, count]) => sum + count, 0));
+  const donutTotal = Math.max(1, primaryCounts.reduce((sum, [, count]) => sum + count, 0));
   let donutOffset = 0;
-  const donutStops = donutCounts.map(([, count], index) => {
-    const start = donutOffset;
-    donutOffset += count / donutTotal * 100;
-    return `${colors[index % colors.length]} ${start}% ${donutOffset}%`;
-  }).join(", ");
-  const barCounts = barsProfile ? fieldCounts(rows, barsProfile).slice(0, 8) : [];
-  const barMax = Math.max(1, ...barCounts.map(([, count]) => count));
-  const columnCounts = columnProfile ? fieldCounts(rows, columnProfile, ["gads", "datums"].includes(columnProfile.type)).slice(0, 12) : [];
-  const columnMax = Math.max(1, ...columnCounts.map(([, count]) => count));
+  const barMax = Math.max(1, ...secondaryCounts.map(([, count]) => count));
+  const recordCounts = records.map((record) => ({
+    record,
+    label: record.fields[titleRole?.id]?.[0] || record.id,
+    count: model.roles.filter((role) => role.id !== titleRole?.id).reduce((sum, role) => sum + new Set(record.fields[role.id] || []).size, 0),
+  })).sort((first, second) => second.count - first.count || first.label.localeCompare(second.label, "lv")).slice(0, 8);
+  const recordMax = Math.max(1, ...recordCounts.map(({ count }) => count));
+  const surfaceClasses = `nsrd-overview analytics-surface animation-${escapeHtml(state.visualization.animation)} style-${escapeHtml(state.visualization.style)}${selected.size ? " has-selection" : ""}${state.visualization.motionFrozen ? " is-motion-paused" : ""}`;
 
-  elements.visualOutput.innerHTML = `<div class="nsrd-overview analytics-surface animation-${escapeHtml(state.visualization.animation)} style-${escapeHtml(state.visualization.style)}">
+  elements.visualOutput.innerHTML = `<div class="${surfaceClasses}">
     <div class="overview-summary analytics-summary" aria-label="Datu pārskata kopsavilkums">
-      <div><strong>${rows.length.toLocaleString("lv-LV")}</strong><span>ieraksti</span></div>
-      <div><strong>${uniqueEntities.toLocaleString("lv-LV")}</strong><span>${escapeHtml(donutProfile?.name || "vērtības")}</span></div>
-      <div><strong>${activeFilters}</strong><span>aktīvi filtri</span></div>
+      <div><strong>${records.length.toLocaleString("lv-LV")}</strong><span>ieraksti</span></div>
+      <div><strong>${uniquePrimary.toLocaleString("lv-LV")}</strong><span>${escapeHtml(primaryRole?.label || "vērtības")}</span></div>
+      <div><strong>${selected.size}</strong><span>atlasīti mezgli</span></div>
     </div>
     <div class="overview-grid analytics-grid">
       <section class="overview-chart analytics-chart overview-donut-chart">
-        <h4>${escapeHtml(donutProfile ? `${donutProfile.name} · sadalījums` : "Vērtību sadalījums")}</h4>
-        ${donutCounts.length ? `<div class="donut-layout"><div class="overview-donut" style="--donut:${donutStops}"><div><strong>${donutTotal}</strong><span>vērtības</span></div></div><div class="donut-legend">${donutCounts.map(([label, count], index) => `<button type="button" data-filter-field="${escapeHtml(donutProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${filterValueForColumn(donutProfile.name) === label}"><i style="--legend-color:${colors[index % colors.length]}"></i><span>${escapeHtml(label)}</span><strong>${count}</strong></button>`).join("")}</div></div>` : `<p class="chart-empty">Nav piemērotas kategoriskas kolonnas.</p>`}
+        <h4>${escapeHtml(primaryRole ? `${primaryRole.label} · sadalījums` : "Vērtību sadalījums")}</h4>
+        ${primaryCounts.length ? `<div class="donut-layout"><div class="overview-donut-svg" role="img" aria-label="${escapeHtml(`${primaryRole.label}: ${donutTotal} vērtības`)}"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="donut-track" cx="60" cy="60" r="46" pathLength="100"></circle>${primaryCounts.map(([label, count], index) => { const segment = count / donutTotal * 100; const offset = donutOffset; donutOffset += segment; return `<circle class="donut-segment" cx="60" cy="60" r="46" pathLength="100" style="--segment-color:${colors[index % colors.length]};stroke-dasharray:${segment} ${100 - segment};stroke-dashoffset:${-offset};--animation-index:${index}"></circle>`; }).join("")}</svg><div><strong>${donutTotal}</strong><span>vērtības</span></div></div><div class="donut-legend">${primaryCounts.map(([label, count], index) => { const node = graph.nodes.find((item) => item.roleId === primaryRole.id && item.label === label); return `<button type="button" data-select-node="${escapeHtml(node?.id || "")}" aria-pressed="${selected.has(node?.id)}"><i style="--legend-color:${colors[index % colors.length]}"></i><span>${escapeHtml(label)}</span><strong>${count}</strong></button>`; }).join("")}</div></div>` : `<p class="chart-empty">Nav piemērotas kategoriskas kolonnas.</p>`}
       </section>
       <section class="overview-chart analytics-chart overview-bars-chart">
-        <h4>${escapeHtml(barsProfile ? `${barsProfile.name} · biežākās vērtības` : "Biežākās vērtības")}</h4>
-        ${barCounts.length ? `<div class="overview-bars analytics-bars">${barCounts.map(([label, count], index) => `<button class="analytics-bar" type="button" data-filter-field="${escapeHtml(barsProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${filterValueForColumn(barsProfile.name) === label}" style="--bar-size:${count / barMax * 100}%;--chart-color:${colors[index % colors.length]}"><span>${escapeHtml(label)}</span><i><b></b></i><strong>${count}</strong></button>`).join("")}</div>` : `<p class="chart-empty">Nav otras salīdzināmas kolonnas.</p>`}
+        <h4>${escapeHtml(secondaryRole ? `${secondaryRole.label} · biežākās vērtības` : "Biežākās vērtības")}</h4>
+        ${secondaryCounts.length ? `<div class="overview-bars analytics-bars">${secondaryCounts.map(([label, count], index) => { const node = graph.nodes.find((item) => item.roleId === secondaryRole.id && item.label === label); return `<button class="analytics-bar${selected.has(node?.id) ? " is-active" : ""}" type="button" data-select-node="${escapeHtml(node?.id || "")}" aria-pressed="${selected.has(node?.id)}" style="--bar-size:${count / barMax * 100}%;--chart-color:${colors[index % colors.length]};--animation-index:${index}"><span>${escapeHtml(label)}</span><i><b></b></i><strong>${count}</strong></button>`; }).join("")}</div>` : `<p class="chart-empty">Nav otras salīdzināmas kolonnas.</p>`}
       </section>
       <section class="overview-chart analytics-chart artifact-chart overview-columns-chart">
-        <h4>${escapeHtml(columnProfile ? `${columnProfile.name} · sadalījums` : "Ierakstu sadalījums")}</h4>
-        ${columnCounts.length ? `<div class="overview-columns artifact-columns">${columnCounts.map(([label, count], index) => `<button class="artifact-column" type="button" data-filter-field="${escapeHtml(columnProfile.name)}" data-filter-value="${escapeHtml(label)}" aria-pressed="${filterValueForColumn(columnProfile.name) === label}" style="--bar-size:${Math.max(4, count / columnMax * 100)}%;--chart-color:${colors[index % colors.length]}"><strong>${count}</strong><i><b></b></i><span>${escapeHtml(label)}</span></button>`).join("")}</div>` : `<p class="chart-empty">Nav piemērotas laika vai kategoriskas kolonnas.</p>`}
+        <h4>Ieraksti pēc saistīto vērtību skaita</h4>
+        ${recordCounts.length ? `<div class="overview-columns artifact-columns">${recordCounts.map(({ record, label, count }, index) => { const value = record.fields[titleRole?.id]?.[0]; const node = graph.nodes.find((item) => item.roleId === titleRole?.id && item.label === value); return `<button class="artifact-column${selected.has(node?.id) ? " is-active" : ""}" type="button" data-select-node="${escapeHtml(node?.id || "")}" aria-pressed="${selected.has(node?.id)}" style="--bar-size:${Math.max(4, count / recordMax * 100)}%;--chart-color:${colors[index % colors.length]};--animation-index:${index}"><strong>${count}</strong><i><b></b></i><span>${escapeHtml(label)}</span></button>`; }).join("")}</div>` : `<p class="chart-empty">Nav parādāmu ierakstu.</p>`}
       </section>
+      ${collaborationMatrixMarkup(records, associationRole, graph, selected)}
     </div>
-    <div class="overview-footer analytics-footer"><strong>${rows.length.toLocaleString("lv-LV")} ieraksti</strong><span>Klikšķiniet uz diagrammas elementa, lai filtrētu visu pārskatu.</span>${activeFilters ? `<button type="button" data-clear-dashboard-filters>Notīrīt atlasi</button>` : ""}</div>
+    <div class="overview-footer analytics-footer"><strong>Pašlaik: ${records.length.toLocaleString("lv-LV")} ieraksti</strong><span>Klikšķiniet uz elementa, lai atlasītu saistītos datus.</span>${selected.size ? `<button type="button" data-clear-selection>Notīrīt atlasi</button>` : ""}</div>
   </div>`;
-  elements.visualOutput.querySelector("[data-clear-dashboard-filters]")?.addEventListener("click", clearVisualFilters);
+  window.lucide?.createIcons({ attrs: { "stroke-width": 1.8 } });
+}
+
+function roleCounts(records, role) {
+  if (!role) return [];
+  const counts = new Map();
+  records.forEach((record) => new Set(record.fields[role.id] || []).forEach((value) => counts.set(value, (counts.get(value) || 0) + 1)));
+  return [...counts.entries()].sort((first, second) => second[1] - first[1] || first[0].localeCompare(second[0], "lv", { numeric: true }));
+}
+
+function collaborationMatrixMarkup(records, role, graph, selected) {
+  if (!role) return `<section class="overview-chart analytics-chart matrix-section"><p class="chart-empty">Kopparādīšanās analīzei nav piemērotas datu lomas.</p></section>`;
+  const matrix = createCooccurrenceData(state.visualizationModel, role.id, records);
+  const rankedValues = matrix.values;
+  const { pairCounts, maxPair, topPairs } = matrix;
+  const nodeId = (value) => graph.nodes.find((node) => node.roleId === role.id && node.label === value)?.id || "";
+  if (!pairCounts.size) return `<section class="overview-chart analytics-chart matrix-section"><div class="matrix-heading"><div><h4>${escapeHtml(`${role.label} · kopparādīšanās`)}</h4><p>Vērtības, kas sastopamas kopā vienā ierakstā.</p></div></div><div class="compact-matrix-empty"><i data-lucide="network" aria-hidden="true"></i><strong>Kopparādīšanās nav atrasta</strong><span>Izvēlētās lomas ierakstos nav vairāku vērtību pāru.</span></div></section>`;
+  return `<section class="overview-chart analytics-chart matrix-section"><div class="matrix-heading"><div><h4><span class="desktop-matrix-title">${escapeHtml(`${role.label} · kopparādīšanās matrica`)}</span><span class="mobile-matrix-title">${escapeHtml(`${role.label} · biežākie pāri`)}</span></h4><p>Vērtības, kas sastopamas kopā vienā ierakstā. Kopparādīšanās pati par sevi nepierāda saikni.</p></div><span>${rankedValues.length} vērtības</span></div><div class="mobile-collaboration-list"><h4>Biežākie pāri</h4>${topPairs.map(({ values: [first, second], count }) => { const firstId = nodeId(first); const secondId = nodeId(second); const active = selected.has(firstId) && selected.has(secondId); return `<button type="button" class="${active ? "is-active" : ""}" data-select-first="${escapeHtml(firstId)}" data-select-second="${escapeHtml(secondId)}" aria-pressed="${active}"><span><strong>${escapeHtml(first)}</strong><small>${escapeHtml(second)}</small></span><i><b style="width:${count / maxPair * 100}%"></b></i><em>${count}</em></button>`; }).join("")}</div><div class="matrix-scroll"><div class="collaboration-matrix" style="--matrix-size:${rankedValues.length}"><span class="matrix-corner"></span>${rankedValues.map((value) => `<button type="button" class="matrix-column-label${selected.has(nodeId(value)) ? " is-active" : ""}" data-select-node="${escapeHtml(nodeId(value))}" aria-pressed="${selected.has(nodeId(value))}"><span>${escapeHtml(value)}</span></button>`).join("")}${rankedValues.map((rowValue, rowIndex) => `<div class="matrix-row"><button type="button" class="matrix-row-label${selected.has(nodeId(rowValue)) ? " is-active" : ""}" data-select-node="${escapeHtml(nodeId(rowValue))}" aria-pressed="${selected.has(nodeId(rowValue))}">${escapeHtml(rowValue)}</button>${rankedValues.map((columnValue, columnIndex) => { const diagonal = rowValue === columnValue; const count = diagonal ? matrix.valueCounts.get(rowValue) || 0 : pairCounts.get([rowValue, columnValue].sort().join("\u0000")) || 0; const active = !diagonal && selected.has(nodeId(rowValue)) && selected.has(nodeId(columnValue)); const sharedLabel = count === 1 ? "1 kopīgs ieraksts" : `${count} kopīgi ieraksti`; return `<button type="button" class="matrix-cell${diagonal ? " is-diagonal" : ""}${active ? " is-active" : ""}" ${diagonal || !count ? "disabled" : `data-select-first="${escapeHtml(nodeId(rowValue))}" data-select-second="${escapeHtml(nodeId(columnValue))}"`} aria-label="${escapeHtml(`${rowValue} un ${columnValue}: ${sharedLabel}`)}" aria-pressed="${active}" style="--cell-strength:${diagonal ? .12 : .12 + count / maxPair * .78};--animation-index:${rowIndex + columnIndex}"><span>${!diagonal && count ? count : ""}</span></button>`; }).join("")}</div>`).join("")}</div></div></section>`;
 }
 
 function fieldCounts(rows, profile, chronological = false) {
