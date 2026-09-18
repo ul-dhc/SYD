@@ -21,7 +21,7 @@ Pēc tam jūs izvēlaties pētniecisko jautājumu. Pašreizējais prototips pal�
 - pētīt saiknes divdaļīgā tīklā;
 - pārlūkot atsevišķus ierakstus.
 
-SYD Library piedāvā līdz trim datiem un jautājumam piemērotiem skatiem. Katram ieteikumam ir īss skaidrojums un interpretācijas ierobežojums. Piemēram, kopīga divu vērtību parādīšanās vienā tabulas rindā vēl nepierāda vēsturisku vai sociālu saikni.
+SYD Library piedāvā līdz trim datiem un jautājumam piemērotām vizualizācijām. Katram ieteikumam ir īss skaidrojums un interpretācijas ierobežojums. Piemēram, kopīga divu vērtību parādīšanās vienā tabulas rindā vēl nepierāda vēsturisku vai sociālu saikni.
 
 ## Jūsu dati paliek pie jums
 
@@ -37,7 +37,7 @@ SYD Guide nevarēs piekļūt datu failam. Sarunā lietotājs varēs aprakstīt k
 
 ## Kopīgojamas vizualizācijas
 
-Plānota iespēja pieslēgt publiski pieejamu Google Sheet un izveidot kopīgojamu SYD skatu. Šajā režīmā lietotājs pats apzināti publicē datu avotu. SYD neveidos atsevišķu datu kopiju savā serverī, bet nolasīs publisko tabulu un izveidos vizualizāciju skatītāja pārlūkā.
+Plānota iespēja pieslēgt publiski pieejamu Google Sheet un izveidot kopīgojamu SYD vizualizāciju. Šajā režīmā lietotājs pats apzināti publicē datu avotu. SYD neveidos atsevišķu datu kopiju savā serverī, bet nolasīs publisko tabulu un izveidos vizualizāciju lietotāja pārlūkā.
 
 Privātiem datiem paredzēta lokāla izpēte un rezultāta saglabāšana savā ierīcē.
 

@@ -235,7 +235,7 @@ function openDataset(dataset, name, options = {}) {
   renderStructure();
   setStatus(dataset.truncated
     ? `Drošības ierobežojuma dēļ parādām pirmos ${MAX_ROWS.toLocaleString("lv-LV")} ierakstus.`
-    : `${state.rows.length.toLocaleString("lv-LV")} ieraksti nolasīti lokāli. Pārbaudiet kolonnu tipus, pirms izvēlaties skatu.`);
+    : `${state.rows.length.toLocaleString("lv-LV")} ieraksti nolasīti lokāli. Pārbaudiet kolonnu tipus, pirms izvēlaties vizualizāciju.`);
   elements.analysis.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -355,7 +355,7 @@ function configureRecommendations() {
 
   elements.visualRecommendations.innerHTML = state.recommendations.length
     ? state.recommendations.map(recommendationMarkup).join("")
-    : `<div class="empty-state"><p>Apstiprinātajai datu struktūrai piemērots skats nav atrasts.</p></div>`;
+    : `<div class="empty-state"><p>Apstiprinātajai datu struktūrai piemērota vizualizācija nav atrasta.</p></div>`;
   configureVisualisation();
 }
 
@@ -409,7 +409,7 @@ function renderVisualisation() {
   if (config.renderer === "network") return renderNetwork();
   const field = elements.fieldSelect.value;
   if (!field) {
-    elements.visualOutput.innerHTML = `<div class="empty-state"><p>Šim skatam vajadzīgā tipa kolonna nav atrasta.<br>Izvēlieties citu pētniecisko jautājumu.</p></div>`;
+    elements.visualOutput.innerHTML = `<div class="empty-state"><p>Šai vizualizācijai vajadzīgā tipa kolonna nav atrasta.<br>Izvēlieties citu pētniecisko jautājumu.</p></div>`;
     return;
   }
   const counts = new Map();
