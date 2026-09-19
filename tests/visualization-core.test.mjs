@@ -17,6 +17,7 @@ import {
   setRoleFilter,
   setVisualizationOption,
   toggleNodeSelection,
+  visualizationPreferences,
 } from "../src/visualization-state.js";
 import { NETWORK_COLOR_KEYS, VISUALIZATION_PALETTES } from "../src/visualization-palettes.js";
 
@@ -111,13 +112,16 @@ test("kopparādīšanās matrica skaita vienā ierakstā sastopamus vērtību p�
 
 test("vienotais stāvoklis pārbauda izvēles un pielāgojas lomu izmaiņām", () => {
   const model = createVisualizationModel(rows, profiles);
-  const state = initializeVisualizationState(createVisualizationState({ palette: "pastel" }), model);
+  const state = initializeVisualizationState(createVisualizationState({ palette: "pastel", theme: "dark" }), model);
   setVisualizationOption(state, "layout", "bipartite");
   toggleNodeSelection(state, "node:a");
   toggleNodeSelection(state, "node:b", true);
   assert.deepEqual(state.selectedNodeIds, ["node:a", "node:b"]);
   assert.equal(state.palette, "pastel");
+  assert.equal(state.theme, "dark");
+  assert.equal(visualizationPreferences(state).theme, "dark");
   assert.throws(() => setVisualizationOption(state, "layout", "aplis"));
+  assert.throws(() => setVisualizationOption(state, "theme", "krēslains"));
 
   const reducedModel = createVisualizationModel(rows, profiles.map((profile) => ({ ...profile, included: profile.name !== "Vieta" })));
   reconcileVisualizationState(state, reducedModel);

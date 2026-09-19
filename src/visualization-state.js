@@ -3,6 +3,7 @@ const VALID_VALUES = {
   selectionLogic: new Set(["any", "all"]),
   layout: new Set(["force", "hierarchical", "bipartite"]),
   palette: new Set(["archive", "neon", "autumn", "pastel", "vivid"]),
+  theme: new Set(["light", "dark"]),
   style: new Set(["standard", "pencil"]),
   animation: new Set(["none", "rain", "echo", "wave"]),
   labelMode: new Set(["active", "all", "none"]),
@@ -20,6 +21,7 @@ export function createVisualizationState(initial = {}) {
     bipartiteRoleIds: [null, null],
     view: "network",
     palette: "archive",
+    theme: "light",
     style: "standard",
     animation: "none",
     motionFrozen: false,
@@ -103,6 +105,7 @@ export function toggleNodeSelection(state, nodeId, additive = false) {
 export function visualizationPreferences(state) {
   return {
     palette: state.palette,
+    theme: state.theme,
     style: state.style,
     animation: state.animation,
     labelMode: state.labelMode,

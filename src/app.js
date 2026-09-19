@@ -1,5 +1,5 @@
 import { SYD_LIBRARY } from "./library.js";
-import { renderInteractiveNetwork } from "./network.js?v=15";
+import { renderInteractiveNetwork } from "./network.js?v=16";
 import { CHART_SWATCH_KEYS, visualizationPalette } from "./visualization-palettes.js?v=1";
 import {
   createBipartiteGraph,
@@ -19,7 +19,7 @@ import {
   setVisualizationOption,
   toggleNodeSelection,
   visualizationPreferences,
-} from "./visualization-state.js?v=9";
+} from "./visualization-state.js?v=10";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_ROWS = 10_000;
@@ -106,6 +106,7 @@ const elements = {
   workspaceViewButtons: [...document.querySelectorAll("[data-workspace-view]")],
   explorerShell: document.querySelector(".explorer-shell"),
   chartSettings: document.querySelector("#chart-settings"),
+  chartTheme: document.querySelector("#chart-theme-select"),
   chartStyle: document.querySelector("#chart-style-select"),
   chartAnimation: document.querySelector("#chart-animation-select"),
   chartPaletteButtons: [...document.querySelectorAll("[data-chart-palette]")],
@@ -173,6 +174,12 @@ elements.workspaceViewSwitcher?.addEventListener("click", (event) => {
 });
 elements.chartStyle?.addEventListener("change", () => {
   setVisualizationOption(state.visualization, "style", elements.chartStyle.value);
+  saveChartPreferences();
+  applyChartPreferences();
+  renderVisualisation();
+});
+elements.chartTheme?.addEventListener("change", () => {
+  setVisualizationOption(state.visualization, "theme", elements.chartTheme.value);
   saveChartPreferences();
   applyChartPreferences();
   renderVisualisation();
@@ -744,8 +751,11 @@ function applyChartPreferences() {
   const palette = visualizationPalette(state.visualization.palette);
   Object.entries(palette.colors).forEach(([key, value]) => elements.explorerShell.style.setProperty(`--viz-${key}`, value));
   elements.explorerShell.dataset.vizPalette = state.visualization.palette;
+  elements.explorerShell.dataset.vizTheme = state.visualization.theme;
   elements.explorerShell.dataset.vizStyle = state.visualization.style;
   elements.explorerShell.dataset.vizAnimation = state.visualization.animation;
+  document.body.dataset.sydVisualTheme = state.visualization.theme;
+  elements.chartTheme.value = state.visualization.theme;
   elements.chartStyle.value = state.visualization.style;
   elements.chartAnimation.value = state.visualization.animation;
   elements.chartPaletteButtons.forEach((button) => {

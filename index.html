@@ -24,7 +24,7 @@
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
     <link rel="stylesheet" href="./src/styles.css" />
     <link rel="stylesheet" href="./src/workspace.css?v=10" />
-    <link rel="stylesheet" href="./src/visualization.css?v=5" />
+    <link rel="stylesheet" href="./src/visualization.css?v=6" />
   </head>
   <body>
     <a class="skip-link" href="#workspace">Pāriet uz darba vidi</a>
@@ -258,6 +258,7 @@
                 </div>
                 <div class="visual-controls" id="visual-controls">
                   <div class="chart-settings" id="chart-settings">
+                    <label><span>Fons</span><select id="chart-theme-select"><option value="light">Gaišs</option><option value="dark">Tumšs</option></select></label>
                     <label><span>Stils</span><select id="chart-style-select"><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label>
                     <label><span>Kustība</span><select id="chart-animation-select"><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label>
                     <fieldset class="chart-palette-options">
@@ -323,6 +324,6 @@
 
     <script src="./src/vendor/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/lucide@0.503.0/dist/umd/lucide.min.js"></script>
-    <script type="module" src="./src/app.js?v=18"></script>
+    <script type="module" src="./src/app.js?v=19"></script>
   </body>
 </html>

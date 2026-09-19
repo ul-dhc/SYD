@@ -28,6 +28,16 @@
   --border: var(--syd-viz-line);
 }
 
+.explorer-shell[data-viz-theme="dark"] {
+  --syd-viz-paper: #07111d;
+  --syd-viz-paper-deep: #142536;
+  --syd-viz-card: #0d1b29;
+  --syd-viz-ink: #fce8cd;
+  --syd-viz-muted: #a7b6c5;
+  --syd-viz-line: #263b50;
+  color-scheme: dark;
+}
+
 .explorer-shell .syd-network {
   --background: var(--syd-viz-paper);
   --foreground: var(--syd-viz-ink);
@@ -42,6 +52,58 @@
 .explorer-shell .filter-field input,
 .explorer-shell .explorer-visual-panel .visual-controls select {
   background: var(--syd-viz-card);
+}
+
+.explorer-shell[data-viz-theme="dark"] .chart-palette-options button:hover,
+.explorer-shell[data-viz-theme="dark"] .chart-palette-options button:focus-visible,
+.explorer-shell[data-viz-theme="dark"] .chart-palette-options button.is-active {
+  background: var(--syd-viz-paper-deep);
+}
+
+.explorer-shell[data-viz-theme="dark"] .panel-scrim {
+  background: color-mix(in srgb, #07111d 76%, transparent);
+}
+
+.explorer-shell[data-viz-theme="dark"] .syd-network-svg.style-pencil {
+  --foreground: var(--syd-viz-ink);
+  --background: var(--syd-viz-paper);
+  background-color: var(--syd-viz-paper);
+  background-image:
+    linear-gradient(color-mix(in srgb, #8fa6bb 14%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, #8fa6bb 14%, transparent) 1px, transparent 1px),
+    radial-gradient(circle, color-mix(in srgb, var(--syd-viz-ink) 9%, transparent) .5px, transparent .7px);
+}
+
+.explorer-shell[data-viz-theme="dark"] .syd-network-svg.style-pencil .graph-node text {
+  stroke: var(--syd-viz-paper);
+}
+
+.explorer-shell[data-viz-theme="dark"][data-viz-style="pencil"] .explorer-visual-panel .visual-output {
+  background-color: var(--syd-viz-paper);
+  background-image:
+    linear-gradient(color-mix(in srgb, #8fa6bb 14%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, #8fa6bb 14%, transparent) 1px, transparent 1px),
+    radial-gradient(circle, color-mix(in srgb, var(--syd-viz-ink) 9%, transparent) .5px, transparent .7px);
+}
+
+.explorer-shell[data-viz-theme="dark"][data-viz-style="pencil"] .overview-chart,
+.explorer-shell[data-viz-theme="dark"][data-viz-style="pencil"] .overview-summary,
+.explorer-shell[data-viz-theme="dark"] .analytics-surface.style-pencil .analytics-summary > div,
+.explorer-shell[data-viz-theme="dark"] .analytics-surface.style-pencil .analytics-chart {
+  background-color: var(--syd-viz-card);
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--syd-viz-ink) 10%, transparent) .55px, transparent .7px);
+}
+
+.explorer-shell[data-viz-theme="dark"] .analytics-surface.style-pencil {
+  --foreground: var(--syd-viz-ink);
+  --muted-foreground: var(--syd-viz-muted);
+  --background: var(--syd-viz-paper);
+  --card: var(--syd-viz-card);
+  --border: var(--syd-viz-line);
+}
+
+.explorer-shell[data-viz-theme="dark"][data-viz-style="pencil"] .matrix-cell:not(.is-diagonal) {
+  background-color: var(--syd-viz-card);
 }
 
 .explorer-shell .clear-filters-button:hover:not(:disabled),
@@ -66,7 +128,26 @@ body.visualisation-focus {
   background: var(--syd-viz-paper);
 }
 
-.visualisation-focus-header {
+body.visualisation-focus[data-syd-visual-theme="dark"] {
+  --syd-viz-paper: #07111d;
+  --syd-viz-paper-deep: #142536;
+  --syd-viz-card: #0d1b29;
+  --syd-viz-ink: #fce8cd;
+  --syd-viz-muted: #a7b6c5;
+  --syd-viz-line: #263b50;
+  --viz-paper: var(--syd-viz-paper);
+  --viz-card: var(--syd-viz-card);
+  --viz-ink: var(--syd-viz-ink);
+  --viz-muted: var(--syd-viz-muted);
+  --viz-line: var(--syd-viz-line);
+  color-scheme: dark;
+}
+
+body.visualisation-focus[data-syd-visual-theme="dark"] .workspace {
+  background: var(--syd-viz-paper);
+}
+
+.visual-focus-header {
   border-color: var(--syd-viz-line);
   background: var(--syd-viz-card);
 }
