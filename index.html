@@ -24,7 +24,7 @@
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
     <link rel="stylesheet" href="./src/styles.css" />
     <link rel="stylesheet" href="./src/workspace.css?v=10" />
-    <link rel="stylesheet" href="./src/visualization.css?v=9" />
+    <link rel="stylesheet" href="./src/visualization.css?v=10" />
   </head>
   <body>
     <a class="skip-link" href="#workspace">Pāriet uz darba vidi</a>
@@ -222,11 +222,18 @@
                 <button class="palette-option" type="button" data-chart-palette="pastel"><span class="palette-swatches" aria-hidden="true"></span><span><strong>Pastelis</strong><small>Pastel</small></span><i data-lucide="check" aria-hidden="true"></i></button>
                 <button class="palette-option" type="button" data-chart-palette="vivid"><span class="palette-swatches" aria-hidden="true"></span><span><strong>Košums</strong><small>Vivid</small></span><i data-lucide="check" aria-hidden="true"></i></button>
               </div></fieldset>
+              <fieldset class="settings-section"><legend>Tīkla kustība</legend><div class="motion-options">
+                <button type="button" data-motion-frozen="false"><i data-lucide="play" aria-hidden="true"></i>Kustīgs</button>
+                <button type="button" data-motion-frozen="true"><i data-lucide="pause" aria-hidden="true"></i>Statisks</button>
+              </div><p>Statiskais režīms aptur tīkla un analītisko diagrammu kustību.</p></fieldset>
+              <fieldset class="settings-section"><legend>Mezglu forma</legend><div class="node-shape-options">
+                <button type="button" data-node-shape="distinct">Pēc kategorijas</button>
+                <button type="button" data-node-shape="circles">Visi apļi</button>
+              </div><p>Kategorijas var atšķirt pēc formas un krāsas vai tikai pēc krāsas.</p></fieldset>
               <fieldset class="settings-section settings-fields"><legend>Attēlojums</legend>
                 <label><span>Fons</span><select id="chart-theme-select"><option value="light">Gaišs</option><option value="dark">Tumšs</option></select></label>
-                <label><span>Mezglu forma</span><select id="chart-node-shape-select"><option value="distinct">Pēc kategorijas</option><option value="circles">Visi apļi</option></select></label>
-                <label><span>Stils</span><select id="chart-style-select"><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label>
-                <label><span>Kustība</span><select id="chart-animation-select"><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label>
+                <label><span>Vizualizācijas stils</span><select id="chart-style-select"><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label>
+                <label><span>Animācijas stils</span><select id="chart-animation-select"><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label>
               </fieldset>
             </section>
             <div class="section-heading">
@@ -247,12 +254,17 @@
                     <i data-lucide="x" aria-hidden="true"></i>
                   </button>
                 </div>
+                <div class="network-layer-controls" id="network-layer-controls" hidden></div>
                 <div class="filter-panel-body">
                   <label class="filter-field search-filter-field">
                     <span>Meklēt datos</span>
                     <span class="filter-input-wrap"><i data-lucide="search" aria-hidden="true"></i><input id="data-search-filter" type="search" placeholder="Meklēt visās kolonnās" autocomplete="off" /></span>
                   </label>
                   <div class="generated-filters" id="generated-filters"></div>
+                  <label class="selection-toggle" id="multi-select-control" hidden>
+                    <input id="multi-select-toggle" type="checkbox" />
+                    <span><strong>Vairāku mezglu atlase</strong><small>Klikšķiniet, lai pievienotu vai noņemtu mezglu.</small></span>
+                  </label>
                   <button class="clear-filters-button" id="clear-visual-filters" type="button">
                     <i data-lucide="filter-x" aria-hidden="true"></i>
                     Notīrīt filtrus
@@ -277,12 +289,12 @@
                   </button>
                 </div>
                 <div class="visual-controls" id="visual-controls">
-                  <button class="visual-settings-button" type="button" data-open-chart-settings aria-controls="chart-settings-panel" aria-expanded="false"><i data-lucide="settings-2" aria-hidden="true"></i><span>Iestatījumi</span></button>
                   <label id="field-control"><span>Izmantotā kolonna</span><select id="field-select"></select></label>
                   <label id="second-field-control" hidden><span>Salīdzināmā kolonna</span><select id="second-field-select"></select></label>
                   <label id="limit-control"><span>Parādīt</span><select id="limit-select"><option value="5">5 biežākās vērtības</option><option value="10" selected>10 biežākās vērtības</option><option value="20">20 biežākās vērtības</option></select></label>
                 </div>
                 <div class="visual-output" id="visual-output" aria-live="polite"></div>
+                <section class="result-list" id="visual-result-list" aria-labelledby="visual-result-title"></section>
                 <aside class="interpretation" id="interpretation"><strong>Interpretācijas piezīme</strong><p>Biežums parāda ierakstu skaitu, nevis parādības nozīmīgumu.</p></aside>
               </div>
               <aside class="explorer-detail-panel" id="explorer-detail-panel" aria-label="Detaļas">
@@ -332,6 +344,6 @@
 
     <script src="./src/vendor/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/lucide@0.503.0/dist/umd/lucide.min.js"></script>
-    <script type="module" src="./src/app.js?v=21"></script>
+    <script type="module" src="./src/app.js?v=22"></script>
   </body>
 </html>

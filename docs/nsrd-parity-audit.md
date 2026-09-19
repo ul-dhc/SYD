@@ -36,3 +36,16 @@ Parauga datu kopā pārbaudīti 41 tīkla mezgls un 196 saites. Analītiskajā p
 Pie 360, 480, 820 un 1280 px dokumenta platums sakrīt ar pārlūka platumu. Telefonā matrica tiek aizstāta ar pāru sarakstu, bet filtru un detaļu paneļi darbojas kā savstarpēji izslēdzošas 360 px atvilktnes. Pārlūka konsolē kļūdas netika konstatētas.
 
 SYD nepārņem NSRD projekta valodu un tumšā režīma vadīklas, jo tās pieder NSRD lietotnes ietvaram, nevis vizualizāciju kodolam.
+
+## Darbvietas ietvara atkārtota pārbaude
+
+Atkārtoti salīdzinot abus projektus vienādā 1800 × 1376 px izmērā, pārnestas arī iepriekš trūkstošās NSRD darbvietas daļas:
+
+- datu slāņu izvēles pārvietotas uz filtru paneli;
+- noņemta tukšā papildu vadīklu josla virs tīkla;
+- pievienots filtrēto un atlasīto ierakstu saraksts zem vizualizācijas;
+- detaļu panelim pārņemts NSRD tukšais stāvoklis, atlases kopsavilkums un vairāku mezglu loģika;
+- paletes, tīkla kustība, mezglu forma, stils un animācija apvienoti zem galvenes iestatījumu ikonas;
+- atjaunoti atsevišķi punktu un teksta izmēra slīdņi;
+- filtru, vizualizācijas un detaļu paneļu atstarpes un platumi pielīdzināti NSRD;
+- 390 × 844 px un 1800 × 1376 px pārbaudē nav horizontālas pārplūdes.

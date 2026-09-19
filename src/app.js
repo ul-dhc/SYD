@@ -1,5 +1,5 @@
 import { SYD_LIBRARY } from "./library.js";
-import { renderInteractiveNetwork } from "./network.js?v=18";
+import { renderInteractiveNetwork } from "./network.js?v=19";
 import { CHART_SWATCH_KEYS, visualizationPalette } from "./visualization-palettes.js?v=1";
 import {
   createBipartiteGraph,
@@ -19,7 +19,7 @@ import {
   setVisualizationOption,
   toggleNodeSelection,
   visualizationPreferences,
-} from "./visualization-state.js?v=12";
+} from "./visualization-state.js?v=13";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_ROWS = 10_000;
@@ -59,6 +59,7 @@ const state = {
   focusReturnScroll: 0,
   filtersPanelOpen: true,
   detailsPanelOpen: true,
+  resultListExpanded: false,
 };
 
 const elements = {
@@ -102,6 +103,9 @@ const elements = {
   closeDetailPanel: document.querySelector("#close-detail-panel"),
   filterCountBadge: document.querySelector("#filter-count-badge"),
   selectionCountBadge: document.querySelector("#selection-count-badge"),
+  networkLayerControls: document.querySelector("#network-layer-controls"),
+  multiSelectControl: document.querySelector("#multi-select-control"),
+  multiSelectToggle: document.querySelector("#multi-select-toggle"),
   workspaceViewSwitcher: document.querySelector("#workspace-view-switcher"),
   workspaceViewButtons: [...document.querySelectorAll("[data-workspace-view]")],
   explorerShell: document.querySelector(".explorer-shell"),
@@ -110,15 +114,18 @@ const elements = {
   openChartSettings: [...document.querySelectorAll("[data-open-chart-settings]")],
   closeChartSettings: document.querySelector("#close-chart-settings"),
   chartTheme: document.querySelector("#chart-theme-select"),
-  chartNodeShape: document.querySelector("#chart-node-shape-select"),
   chartStyle: document.querySelector("#chart-style-select"),
   chartAnimation: document.querySelector("#chart-animation-select"),
+  chartMotionButtons: [...document.querySelectorAll("[data-motion-frozen]")],
+  chartNodeShapeButtons: [...document.querySelectorAll("[data-node-shape]")],
   chartPaletteButtons: [...document.querySelectorAll("[data-chart-palette]")],
   openVisualisationFocus: document.querySelector("#open-visualisation-focus"),
   closeVisualisationFocus: document.querySelector("#close-visualisation-focus"),
   focusDatasetName: document.querySelector("#focus-dataset-name"),
   focusVisualisationName: document.querySelector("#focus-visualisation-name"),
   visualOutput: document.querySelector("#visual-output"),
+  visualControls: document.querySelector("#visual-controls"),
+  resultList: document.querySelector("#visual-result-list"),
   interpretation: document.querySelector("#interpretation p"),
   stepperItems: [...document.querySelectorAll(".stepper li")],
 };
@@ -185,12 +192,18 @@ elements.chartStyle?.addEventListener("change", () => {
   applyChartPreferences();
   renderVisualisation();
 });
-elements.chartNodeShape?.addEventListener("change", () => {
-  setVisualizationOption(state.visualization, "nodeShapeMode", elements.chartNodeShape.value);
+elements.chartNodeShapeButtons.forEach((button) => button.addEventListener("click", () => {
+  setVisualizationOption(state.visualization, "nodeShapeMode", button.dataset.nodeShape);
   saveChartPreferences();
   applyChartPreferences();
   renderVisualisation();
-});
+}));
+elements.chartMotionButtons.forEach((button) => button.addEventListener("click", () => {
+  state.visualization.motionFrozen = button.dataset.motionFrozen === "true";
+  saveChartPreferences();
+  applyChartPreferences();
+  renderVisualisation();
+}));
 elements.chartTheme?.addEventListener("change", () => {
   setVisualizationOption(state.visualization, "theme", elements.chartTheme.value);
   saveChartPreferences();
@@ -214,6 +227,33 @@ elements.closeChartSettings?.addEventListener("click", closeChartSettings);
 elements.chartSettingsScrim?.addEventListener("click", closeChartSettings);
 elements.openVisualisationFocus?.addEventListener("click", openVisualisationFocus);
 elements.closeVisualisationFocus?.addEventListener("click", closeVisualisationFocus);
+elements.multiSelectToggle?.addEventListener("change", () => {
+  state.visualization.multiSelect = elements.multiSelectToggle.checked;
+});
+elements.detailPanelBody?.addEventListener("click", (event) => {
+  const logicButton = event.target.closest("[data-selection-logic]");
+  if (logicButton) {
+    state.visualization.selectionLogic = logicButton.dataset.selectionLogic;
+    renderVisualisation();
+    return;
+  }
+  const removeButton = event.target.closest("[data-remove-node]");
+  if (!removeButton) return;
+  state.visualization.selectedNodeIds = state.visualization.selectedNodeIds.filter((id) => id !== removeButton.dataset.removeNode);
+  renderVisualisation();
+});
+elements.resultList?.addEventListener("click", (event) => {
+  if (event.target.closest("[data-toggle-results]")) {
+    state.resultListExpanded = !state.resultListExpanded;
+    renderVisualisation();
+    return;
+  }
+  const resultButton = event.target.closest("[data-result-node]");
+  if (!resultButton?.dataset.resultNode) return;
+  state.visualization.selectionLogic = "any";
+  state.visualization.selectedNodeIds = [resultButton.dataset.resultNode];
+  renderVisualisation();
+});
 elements.visualOutput?.addEventListener("click", (event) => {
   const selectedPair = event.target.closest("[data-select-first][data-select-second]");
   if (selectedPair) {
@@ -725,15 +765,18 @@ function renderWorkspaceDetails(filteredRecords = filterVisualizationRecords(sta
   elements.selectionCountBadge.hidden = selectedNodes.length === 0;
 
   if (!selectedNodes.length) {
-    elements.detailPanelBody.innerHTML = `<div class="detail-empty"><i data-lucide="mouse-pointer-click" aria-hidden="true"></i><strong>${filteredRecords.length.toLocaleString("lv-LV")} ieraksti pašreizējā atlasē</strong><p>Izvēlieties mezglu vai diagrammas elementu, lai šeit redzētu saistītos datus.</p></div>`;
+    elements.detailPanelBody.innerHTML = `<div class="detail-empty"><i data-lucide="circle-help" aria-hidden="true"></i><h2>Izvēlieties mezglu</h2><p>Klikšķiniet vizualizācijā, lai izgaismotu saites un redzētu atlasīto datu kopsavilkumu.</p><div><i data-lucide="rows-3" aria-hidden="true"></i>Pašlaik filtrā: ${filteredRecords.length.toLocaleString("lv-LV")} ieraksti</div></div>`;
     window.lucide?.createIcons({ attrs: { "stroke-width": 1.8 } });
     return;
   }
 
   const paletteColors = { person: "var(--viz-blue)", artifact: "var(--viz-orange)", format: "var(--viz-green)", group: "var(--viz-magenta)", institution: "var(--viz-teal)" };
-  elements.detailPanelBody.innerHTML = `<div class="detail-summary"><div><strong>${selectedNodes.length}</strong><span>atlasīti mezgli</span></div><div><strong>${relatedRecords.length}</strong><span>saistīti ieraksti</span></div></div>
-    <section class="detail-selection"><h4>Atlase</h4>${selectedNodes.map((node) => `<div class="detail-chip" style="--chip-color:${paletteColors[node.type] || "var(--viz-blue)"}"><i></i><span title="${escapeHtml(node.label)}">${escapeHtml(node.label)}</span><small>${escapeHtml(state.visualizationModel.roleById.get(node.roleId)?.label || "Vērtība")}</small></div>`).join("")}</section>
+  elements.detailPanelBody.innerHTML = `<p class="inspector-type">${selectedNodes.length === 1 ? escapeHtml(state.visualizationModel.roleById.get(selectedNodes[0].roleId)?.label || "Vērtība") : `Atlase · ${selectedNodes.length} mezgli`}</p>
+    <h2>${selectedNodes.length === 1 ? escapeHtml(selectedNodes[0].label) : "Atlasītie mezgli"}</h2>
+    <div class="detail-summary"><div><strong>${selectedNodes.length}</strong><span>atlasīti mezgli</span></div><div><strong>${relatedRecords.length}</strong><span>saistīti ieraksti</span></div></div>
+    <section class="detail-selection"><h4>Atlase</h4><div class="selection-chips">${selectedNodes.map((node) => `<button type="button" data-remove-node="${escapeHtml(node.id)}" style="--chip-color:${paletteColors[node.type] || "var(--viz-blue)"}" aria-label="Noņemt ${escapeHtml(node.label)} no atlases"><i></i><span title="${escapeHtml(node.label)}">${escapeHtml(node.label)}</span><i data-lucide="x" aria-hidden="true"></i></button>`).join("")}</div>${selectedNodes.length > 1 ? `<div class="logic-switch" aria-label="Atlases loģika"><button type="button" data-selection-logic="any" aria-pressed="${state.visualization.selectionLogic === "any"}">Jebkurš</button><button type="button" data-selection-logic="all" aria-pressed="${state.visualization.selectionLogic === "all"}">Visi</button></div>` : ""}</section>
     <section class="detail-records"><h4>Saistītie ieraksti</h4>${relatedRecords.slice(0, 8).map(detailRecordMarkup).join("")}${relatedRecords.length > 8 ? `<span class="detail-more">Vēl ${relatedRecords.length - 8} ieraksti</span>` : ""}</section>`;
+  window.lucide?.createIcons({ attrs: { "stroke-width": 1.8 } });
 }
 
 function detailRecordMarkup(record) {
@@ -743,6 +786,24 @@ function detailRecordMarkup(record) {
   const primary = values[0]?.value || record.id;
   const secondary = values.slice(1, 4).map(({ role, value }) => `${role.label}: ${value}`).join(" · ");
   return `<div class="detail-record"><strong title="${escapeHtml(primary)}">${escapeHtml(primary)}</strong><span>${escapeHtml(secondary || "Papildu dati nav norādīti")}</span></div>`;
+}
+
+function renderResultList(records) {
+  if (!elements.resultList || !state.visualizationModel) return;
+  const model = state.visualizationModel;
+  const titleRole = model.roles.find((role) => role.paletteSlot === "artifact") || model.roles[0];
+  const timeRole = model.roles.find((role) => ["gads", "datums"].includes(role.valueType));
+  const graph = createMultilayerGraph(model, model.roles.map((role) => role.id), records);
+  const shown = state.resultListExpanded ? records : records.slice(0, 10);
+  elements.resultList.innerHTML = `<div class="result-heading"><p>${state.visualization.selectedNodeIds.length ? "Atlases rezultāti" : "Filtrētie dati"}</p><h3 id="visual-result-title">Ieraksti <span>${records.length.toLocaleString("lv-LV")}</span></h3></div>${shown.length ? `<div class="result-rows">${shown.map((record) => {
+    const title = record.fields[titleRole?.id]?.[0] || record.id;
+    const node = graph.nodes.find((item) => item.roleId === titleRole?.id && item.label === title);
+    const time = timeRole ? record.fields[timeRole.id]?.[0] || "" : "";
+    const secondary = model.roles.filter((role) => role.id !== titleRole?.id && role.id !== timeRole?.id).flatMap((role) => record.fields[role.id] || []).filter((value) => value && value !== "Nav norādīts").slice(0, 3).join(" · ");
+    const relationCount = model.roles.filter((role) => role.id !== titleRole?.id).reduce((sum, role) => sum + new Set(record.fields[role.id] || []).size, 0);
+    return `<button type="button" data-result-node="${escapeHtml(node?.id || "")}"><time>${escapeHtml(time)}</time><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(secondary)}</small></span><em>${relationCount} saites</em><i data-lucide="chevron-right" aria-hidden="true"></i></button>`;
+  }).join("")}</div>` : `<p class="no-results">Šai filtru kombinācijai datu nav.</p>`}${records.length > 10 ? `<button type="button" class="more-results more-results-button" data-toggle-results>${state.resultListExpanded ? "Rādīt mazāk" : `Vēl ${records.length - 10}`}</button>` : ""}`;
+  window.lucide?.createIcons({ attrs: { "stroke-width": 1.8 } });
 }
 
 function clearVisualFilters() {
@@ -773,9 +834,10 @@ function applyChartPreferences() {
   elements.explorerShell.dataset.vizAnimation = state.visualization.animation;
   document.body.dataset.sydVisualTheme = state.visualization.theme;
   elements.chartTheme.value = state.visualization.theme;
-  elements.chartNodeShape.value = state.visualization.nodeShapeMode;
   elements.chartStyle.value = state.visualization.style;
   elements.chartAnimation.value = state.visualization.animation;
+  elements.chartMotionButtons.forEach((button) => button.setAttribute("aria-pressed", String((button.dataset.motionFrozen === "true") === state.visualization.motionFrozen)));
+  elements.chartNodeShapeButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.nodeShape === state.visualization.nodeShapeMode)));
   elements.chartPaletteButtons.forEach((button) => {
     const active = button.dataset.chartPalette === state.visualization.palette;
     const option = visualizationPalette(button.dataset.chartPalette);
@@ -925,11 +987,20 @@ function renderVisualisation() {
   elements.fieldControl.hidden = ["records", "overview", "network"].includes(effectiveRenderer);
   elements.secondFieldControl.hidden = effectiveRenderer !== "comparison";
   elements.limitControl.hidden = ["records", "overview", "comparison", "network"].includes(effectiveRenderer);
+  elements.visualControls.hidden = ["network", "overview"].includes(effectiveRenderer);
+  elements.resultList.hidden = !["network", "overview"].includes(effectiveRenderer);
+  elements.multiSelectControl.hidden = effectiveRenderer !== "network";
+  elements.multiSelectToggle.checked = state.visualization.multiSelect;
+  if (effectiveRenderer !== "network") {
+    elements.networkLayerControls.hidden = true;
+    elements.networkLayerControls.replaceChildren();
+  }
   elements.visualOutput.classList.toggle("network-output", effectiveRenderer === "network");
   const filteredRecords = filterVisualizationRecords(state.visualizationModel, state.visualization);
   const rows = filteredRecords.map((record) => record.sourceRow);
   updateFilterSummary(rows);
   renderWorkspaceDetails(filteredRecords);
+  if (["network", "overview"].includes(effectiveRenderer)) renderResultList(recordsForCurrentSelection(filteredRecords));
   if (effectiveRenderer === "overview") return renderDataOverview(recordsForCurrentSelection(filteredRecords));
   if (effectiveRenderer === "records") return renderRecords();
   if (effectiveRenderer === "comparison") return renderComparison();
@@ -1073,10 +1144,13 @@ function renderNetwork() {
     model: state.visualizationModel,
     records: filterVisualizationRecords(state.visualizationModel, state.visualization),
     roleIds,
+    layerControlsHost: elements.networkLayerControls,
   }, state.visualization, () => {
     saveChartPreferences();
     applyChartPreferences();
-    renderWorkspaceDetails(filterVisualizationRecords(state.visualizationModel, state.visualization));
+    const filteredRecords = filterVisualizationRecords(state.visualizationModel, state.visualization);
+    renderWorkspaceDetails(filteredRecords);
+    renderResultList(recordsForCurrentSelection(filteredRecords));
   });
 }
 
@@ -1121,7 +1195,7 @@ function renderRecords() {
 
 function resetWorkspace() {
   history.replaceState(null, "", "#workspace");
-  Object.assign(state, { rows: [], columns: [], profiles: [], name: "", question: "categories", workbook: null, workbookName: "", sheetName: "", structureConfirmed: false, moduleId: "", recommendations: [], visualizationModel: null });
+  Object.assign(state, { rows: [], columns: [], profiles: [], name: "", question: "categories", workbook: null, workbookName: "", sheetName: "", structureConfirmed: false, moduleId: "", recommendations: [], visualizationModel: null, resultListExpanded: false });
   clearVisualizationFilters(state.visualization);
   state.filtersPanelOpen = !compactWorkspaceMedia.matches;
   state.detailsPanelOpen = !compactWorkspaceMedia.matches;

@@ -23,6 +23,7 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
     animationFrame: null,
     elasticTargets: new Map(),
     elasticVelocities: new Map(),
+    activeScaleControl: null,
   };
 
   container.innerHTML = shellMarkup(data, sharedState);
@@ -34,6 +35,11 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
   const layoutSelect = root.querySelector("[data-network-layout]");
   const leftRoleSelect = root.querySelector("[data-network-left-role]");
   const rightRoleSelect = root.querySelector("[data-network-right-role]");
+  const layerControls = root.querySelector(".syd-network-layers");
+  if (data.layerControlsHost && layerControls) {
+    data.layerControlsHost.replaceChildren(layerControls);
+    data.layerControlsHost.hidden = false;
+  }
 
   rebuildGraph(true);
   render();
@@ -66,6 +72,13 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
   root.addEventListener("click", (event) => {
     const roleButton = event.target.closest("[data-network-role]");
     const actionButton = event.target.closest("[data-network-action]");
+    const scaleButton = event.target.closest("[data-scale-toggle]");
+    if (scaleButton) {
+      const control = scaleButton.dataset.scaleToggle;
+      state.activeScaleControl = state.activeScaleControl === control ? null : control;
+      renderScaleControls();
+      return;
+    }
     if (roleButton) {
       toggleRole(roleButton.dataset.networkRole);
       return;
@@ -74,6 +87,18 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
       runAction(actionButton.dataset.networkAction);
       return;
     }
+  });
+  root.addEventListener("input", (event) => {
+    if (event.target.matches("[data-node-scale]")) sharedState.nodeScale = Number(event.target.value);
+    else if (event.target.matches("[data-label-scale]")) sharedState.labelScale = Number(event.target.value);
+    else return;
+    commitState();
+    renderGraph();
+    renderScaleControls();
+  });
+  layerControls?.addEventListener("click", (event) => {
+    const roleButton = event.target.closest("[data-network-role]");
+    if (roleButton) toggleRole(roleButton.dataset.networkRole);
   });
 
   root.addEventListener("keydown", (event) => {
@@ -197,7 +222,7 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
     svg.classList.remove("is-dragging");
     if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
     if (!wasMoved && interaction.type === "node") {
-      selectNode(interaction.id, interaction.additive);
+      selectNode(interaction.id, interaction.additive || sharedState.multiSelect);
       return;
     }
     if (!wasMoved && interaction.type === "pan" && sharedState.selectedNodeIds.length) {
@@ -253,7 +278,7 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
           let dx = positions[right].x - positions[left].x;
           let dy = positions[right].y - positions[left].y;
           let distance = Math.hypot(dx, dy);
-          const minimum = nodeRadius(state.graph.nodes[left], sharedState.layout) + nodeRadius(state.graph.nodes[right], sharedState.layout) + 9;
+          const minimum = nodeRadius(state.graph.nodes[left], sharedState.layout, sharedState.nodeScale) + nodeRadius(state.graph.nodes[right], sharedState.layout, sharedState.nodeScale) + 9;
           const influence = minimum + 34;
           if (distance >= influence) continue;
           if (distance < 0.01) {
@@ -313,8 +338,8 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
     leftRoleSelect.value = sharedState.bipartiteRoleIds[0] || "";
     rightRoleSelect.value = sharedState.bipartiteRoleIds[1] || "";
     root.querySelector(".syd-bipartite-options").hidden = sharedState.layout !== "bipartite";
-    root.querySelector(".syd-network-layers").hidden = sharedState.layout === "bipartite";
-    root.querySelectorAll("[data-network-role]").forEach((button) => button.setAttribute("aria-pressed", String(sharedState.visibleRoleIds.has(button.dataset.networkRole))));
+    if (layerControls) layerControls.hidden = sharedState.layout === "bipartite";
+    layerControls?.querySelectorAll("[data-network-role]").forEach((button) => button.setAttribute("aria-pressed", String(sharedState.visibleRoleIds.has(button.dataset.networkRole))));
     root.querySelectorAll(".syd-palette[data-palette]").forEach((button) => {
       const active = button.dataset.palette === sharedState.palette;
       button.classList.toggle("is-active", active);
@@ -329,11 +354,31 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
     const labelButton = root.querySelector('[data-network-action="labels"]');
     labelButton.className = `label-mode-button is-${sharedState.labelMode}`;
     labelButton.setAttribute("aria-pressed", String(sharedState.labelMode !== "none"));
-    root.querySelector(".syd-network-tools output").textContent = `${Math.round(sharedState.zoom * 100)}%`;
+    root.querySelector(".network-zoom-output").textContent = `${Math.round(sharedState.zoom * 100)}%`;
+    renderScaleControls();
     renderLegend();
     renderGraph();
     renderInspector();
     window.lucide?.createIcons({ attrs: { "stroke-width": 1.8 } });
+  }
+
+  function renderScaleControls() {
+    const nodeButton = root.querySelector('[data-scale-toggle="node"]');
+    const labelButton = root.querySelector('[data-scale-toggle="label"]');
+    const nodePopover = root.querySelector('[data-scale-popover="node"]');
+    const labelPopover = root.querySelector('[data-scale-popover="label"]');
+    nodeButton?.setAttribute("aria-expanded", String(state.activeScaleControl === "node"));
+    labelButton?.setAttribute("aria-expanded", String(state.activeScaleControl === "label"));
+    if (nodePopover) nodePopover.hidden = state.activeScaleControl !== "node";
+    if (labelPopover) labelPopover.hidden = state.activeScaleControl !== "label";
+    const nodeInput = root.querySelector("[data-node-scale]");
+    const labelInput = root.querySelector("[data-label-scale]");
+    if (nodeInput) nodeInput.value = String(sharedState.nodeScale);
+    if (labelInput) labelInput.value = String(sharedState.labelScale);
+    const nodeOutput = nodePopover?.querySelector("output");
+    const labelOutput = labelPopover?.querySelector("output");
+    if (nodeOutput) nodeOutput.textContent = `${Math.round(sharedState.nodeScale * 100)}%`;
+    if (labelOutput) labelOutput.textContent = `${Math.round(sharedState.labelScale * 100)}%`;
   }
 
   function renderLegend() {
@@ -377,7 +422,7 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
       const reverse = sourceSelected !== targetSelected ? targetSelected : sharedState.layout === "hierarchical" && source.y > target.y;
       const startNode = reverse ? target : source;
       const endNode = reverse ? source : target;
-      const endpoints = lineEndpoints(startNode, endNode, nodeRadius(startNode, sharedState.layout), nodeRadius(endNode, sharedState.layout));
+      const endpoints = lineEndpoints(startNode, endNode, nodeRadius(startNode, sharedState.layout, sharedState.nodeScale), nodeRadius(endNode, sharedState.layout, sharedState.nodeScale));
       edgeElements[index]?.querySelectorAll("line").forEach((line) => {
         line.setAttribute("x1", endpoints.start.x);
         line.setAttribute("y1", endpoints.start.y);
@@ -412,7 +457,7 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
     const reverse = sourceSelected !== targetSelected ? targetSelected : sharedState.layout === "hierarchical" && source.y > target.y;
     const startNode = reverse ? target : source;
     const endNode = reverse ? source : target;
-    const endpoints = lineEndpoints(startNode, endNode, nodeRadius(startNode, sharedState.layout), nodeRadius(endNode, sharedState.layout));
+    const endpoints = lineEndpoints(startNode, endNode, nodeRadius(startNode, sharedState.layout, sharedState.nodeScale), nodeRadius(endNode, sharedState.layout, sharedState.nodeScale));
     const baseWidth = active ? Math.min(1.65, 0.45 + Math.sqrt(edge.weight) * 0.32) : 0.62;
     const showFlow = sharedState.animation === "rain" || selected.size === 0 || active;
     const line = `x1="${endpoints.start.x}" y1="${endpoints.start.y}" x2="${endpoints.end.x}" y2="${endpoints.end.y}"`;
@@ -420,7 +465,7 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
   }
 
   function nodeMarkup(node, selected, activeIds) {
-    const radius = nodeRadius(node, sharedState.layout);
+    const radius = nodeRadius(node, sharedState.layout, sharedState.nodeScale);
     const isSelected = selected.has(node.id);
     const active = !selected.size || activeIds.has(node.id);
     const showLabel = sharedState.labelMode === "all" || (sharedState.labelMode === "active" && selected.size > 0 && active);
@@ -579,8 +624,9 @@ function layoutBipartite(graph) {
   return { ...graph, nodes: [...positionColumn(leftRole, 230), ...positionColumn(rightRole, 670)] };
 }
 
-function nodeRadius(node, layout) {
-  return layout === "force" ? Math.min(27, 6 + Math.sqrt(node.degree) * 2.2) : Math.min(15, 3.5 + Math.sqrt(node.degree) * 1.45);
+function nodeRadius(node, layout, scale = 1) {
+  const base = layout === "force" ? Math.min(27, 6 + Math.sqrt(node.degree) * 2.2) : Math.min(15, 3.5 + Math.sqrt(node.degree) * 1.45);
+  return base * scale;
 }
 
 function nodeShape(type, radius, className) {
@@ -611,7 +657,7 @@ function shellMarkup(data, state) {
   const roles = data.roleIds.map((id) => data.model.roleById.get(id)).filter(Boolean);
   const options = roles.map((role) => `<option value="${escapeHtml(role.id)}">${escapeHtml(role.label)}</option>`).join("");
   const roleButtons = roles.map((role) => `<button type="button" class="syd-layer-chip" data-network-role="${escapeHtml(role.id)}" aria-pressed="${state.visibleRoleIds.has(role.id)}"><i class="node-swatch ${role.paletteSlot}"></i>${escapeHtml(role.label)}</button>`).join("");
-  return `<section class="syd-network" data-palette="${state.palette}" data-theme="${state.theme}" data-node-shape="${state.nodeShapeMode}" data-style="${state.style}" data-animation="${state.animation}"><div class="syd-network-toolbar network-toolbar network-toolbar-secondary" aria-label="Tīkla iestatījumi"><div class="syd-network-toolbar-tools toolbar-tools"><div class="syd-network-view-options network-view-options"><label class="syd-network-select network-select"><span>Izkārtojums</span><select data-network-layout><option value="force">Brīvais</option><option value="hierarchical">Hierarhisks</option><option value="bipartite">Divdaļīgs</option></select></label><div class="syd-bipartite-options" hidden><label class="syd-network-select network-select"><span>Kreisā puse</span><select data-network-left-role>${options}</select></label><label class="syd-network-select network-select"><span>Labā puse</span><select data-network-right-role>${options}</select></label></div></div><div class="syd-network-tools network-controls" aria-label="Tīkla darbības"><button type="button" data-network-action="motion" aria-label="Apturēt kustību" title="Apturēt kustību"><i data-lucide="pause"></i></button><button type="button" data-network-action="labels" class="label-mode-button" aria-label="Mainīt nosaukumu režīmu" title="Mainīt nosaukumu režīmu"><i data-lucide="eye"></i></button><button type="button" data-network-action="label-size" class="graph-text-size-button" aria-label="Mainīt nosaukumu izmēru" title="Mainīt nosaukumu izmēru">A+</button><button type="button" data-network-action="scatter" class="node-scatter-button" aria-label="Izkliedēt mezglus" title="Izkliedēt mezglus"><i data-lucide="scatter-chart"></i></button><button type="button" data-network-action="zoom-out" aria-label="Attālināt" title="Attālināt"><i data-lucide="zoom-out"></i></button><output aria-label="Mērogs">100%</output><button type="button" data-network-action="zoom-in" aria-label="Pietuvināt" title="Pietuvināt"><i data-lucide="zoom-in"></i></button><button type="button" data-network-action="reset" aria-label="Atjaunot novietojumu" title="Atjaunot novietojumu"><i data-lucide="rotate-ccw"></i></button></div></div><fieldset class="syd-network-layers"><legend>Datu slāņi</legend><div>${roleButtons}</div></fieldset><div class="syd-network-legend legend" aria-label="Leģenda"></div></div><div class="syd-network-canvas network-stage"><svg class="syd-network-svg network-canvas" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="Daudzslāņu saikņu tīkls"><rect class="network-hit-area" width="${WIDTH}" height="${HEIGHT}"></rect><g class="syd-network-graph"></g></svg></div><div class="syd-network-inspector network-hint" aria-live="polite"></div><p class="visually-hidden syd-network-status" aria-live="polite"></p></section>`;
+  return `<section class="syd-network" data-palette="${state.palette}" data-theme="${state.theme}" data-node-shape="${state.nodeShapeMode}" data-style="${state.style}" data-animation="${state.animation}"><div class="syd-network-toolbar network-toolbar network-toolbar-secondary" aria-label="Tīkla iestatījumi"><div class="syd-network-toolbar-tools toolbar-tools"><div class="syd-network-view-options network-view-options"><label class="syd-network-select network-select"><span>Izkārtojums</span><select data-network-layout><option value="force">Brīvais</option><option value="hierarchical">Hierarhisks</option><option value="bipartite">Divdaļīgs</option></select></label><div class="syd-bipartite-options" hidden><label class="syd-network-select network-select"><span>Kreisā puse</span><select data-network-left-role>${options}</select></label><label class="syd-network-select network-select"><span>Labā puse</span><select data-network-right-role>${options}</select></label></div></div><div class="syd-network-tools network-controls" aria-label="Tīkla darbības"><button type="button" data-network-action="motion" aria-label="Apturēt kustību" title="Apturēt kustību"><i data-lucide="pause"></i></button><button type="button" data-network-action="labels" class="label-mode-button" aria-label="Mainīt nosaukumu režīmu" title="Mainīt nosaukumu režīmu"><i data-lucide="eye"></i></button><div class="graph-scale-control"><button type="button" data-scale-toggle="node" aria-label="Punktu izmērs" aria-expanded="false" aria-controls="node-size-control" title="Punktu izmērs"><i data-lucide="circle"></i></button><div class="graph-scale-popover" id="node-size-control" data-scale-popover="node" hidden><span>Punktu izmērs</span><output>100%</output><input type="range" data-node-scale min="0.5" max="2" step="0.05" value="${state.nodeScale}"></div></div><div class="graph-scale-control"><button type="button" data-scale-toggle="label" class="graph-text-size-button" aria-label="Teksta izmērs" aria-expanded="false" aria-controls="label-size-control" title="Teksta izmērs"><i data-lucide="type"></i></button><div class="graph-scale-popover" id="label-size-control" data-scale-popover="label" hidden><span>Teksta izmērs</span><output>100%</output><input type="range" data-label-scale min="0.5" max="3" step="0.1" value="${state.labelScale}"></div></div><button type="button" data-network-action="scatter" class="node-scatter-button" aria-label="Izkliedēt mezglus" title="Izkliedēt mezglus"><i data-lucide="scatter-chart"></i></button><button type="button" data-network-action="zoom-out" aria-label="Attālināt" title="Attālināt"><i data-lucide="zoom-out"></i></button><output class="network-zoom-output" aria-label="Mērogs">100%</output><button type="button" data-network-action="zoom-in" aria-label="Pietuvināt" title="Pietuvināt"><i data-lucide="zoom-in"></i></button><button type="button" data-network-action="reset" aria-label="Atjaunot novietojumu" title="Atjaunot novietojumu"><i data-lucide="rotate-ccw"></i></button></div></div><fieldset class="syd-network-layers"><legend>Datu slāņi</legend><div>${roleButtons}</div></fieldset><div class="syd-network-legend legend" aria-label="Leģenda"></div></div><div class="syd-network-canvas network-stage"><svg class="syd-network-svg network-canvas" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="Daudzslāņu saikņu tīkls"><rect class="network-hit-area" width="${WIDTH}" height="${HEIGHT}"></rect><g class="syd-network-graph"></g></svg></div><div class="syd-network-inspector network-hint" aria-live="polite"></div><p class="visually-hidden syd-network-status" aria-live="polite"></p></section>`;
 }
 
 function definitionsMarkup() {

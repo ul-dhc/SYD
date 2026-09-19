@@ -112,7 +112,7 @@ test("kopparādīšanās matrica skaita vienā ierakstā sastopamus vērtību p�
 
 test("vienotais stāvoklis pārbauda izvēles un pielāgojas lomu izmaiņām", () => {
   const model = createVisualizationModel(rows, profiles);
-  const state = initializeVisualizationState(createVisualizationState({ palette: "pastel", theme: "dark", nodeShapeMode: "circles" }), model);
+  const state = initializeVisualizationState(createVisualizationState({ palette: "pastel", theme: "dark", nodeShapeMode: "circles", nodeScale: 1.4, labelScale: 1.8 }), model);
   setVisualizationOption(state, "layout", "bipartite");
   toggleNodeSelection(state, "node:a");
   toggleNodeSelection(state, "node:b", true);
@@ -120,8 +120,12 @@ test("vienotais stāvoklis pārbauda izvēles un pielāgojas lomu izmaiņām", (
   assert.equal(state.palette, "pastel");
   assert.equal(state.theme, "dark");
   assert.equal(state.nodeShapeMode, "circles");
+  assert.equal(state.nodeScale, 1.4);
+  assert.equal(state.labelScale, 1.8);
   assert.equal(visualizationPreferences(state).theme, "dark");
   assert.equal(visualizationPreferences(state).nodeShapeMode, "circles");
+  assert.equal(visualizationPreferences(state).nodeScale, 1.4);
+  assert.equal(visualizationPreferences(state).labelScale, 1.8);
   assert.throws(() => setVisualizationOption(state, "layout", "aplis"));
   assert.throws(() => setVisualizationOption(state, "theme", "krēslains"));
   assert.throws(() => setVisualizationOption(state, "nodeShapeMode", "kvadrāti"));

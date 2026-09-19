@@ -27,8 +27,10 @@ export function createVisualizationState(initial = {}) {
     style: "standard",
     animation: "none",
     motionFrozen: false,
+    multiSelect: false,
     labelMode: "active",
     labelScale: 1,
+    nodeScale: 1,
     zoom: 1,
     pan: { x: 0, y: 0 },
     manualPositions: new Map(),
@@ -47,6 +49,7 @@ export function initializeVisualizationState(state, model) {
   state.layout = "force";
   state.view = "network";
   state.motionFrozen = false;
+  state.multiSelect = false;
   state.zoom = 1;
   state.pan = { x: 0, y: 0 };
   state.manualPositions = new Map();
@@ -111,8 +114,10 @@ export function visualizationPreferences(state) {
     nodeShapeMode: state.nodeShapeMode,
     style: state.style,
     animation: state.animation,
+    motionFrozen: state.motionFrozen,
     labelMode: state.labelMode,
     labelScale: state.labelScale,
+    nodeScale: state.nodeScale,
     layout: state.layout,
   };
 }
@@ -123,5 +128,7 @@ function validInitialState(initial) {
     if (allowed.has(initial[key])) valid[key] = initial[key];
   }
   if (typeof initial.motionFrozen === "boolean") valid.motionFrozen = initial.motionFrozen;
+  if (Number.isFinite(initial.labelScale) && initial.labelScale >= 0.5 && initial.labelScale <= 3) valid.labelScale = initial.labelScale;
+  if (Number.isFinite(initial.nodeScale) && initial.nodeScale >= 0.5 && initial.nodeScale <= 2) valid.nodeScale = initial.nodeScale;
   return valid;
 }
