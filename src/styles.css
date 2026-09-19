@@ -126,6 +126,13 @@ nav a:focus-visible {
   text-transform: uppercase;
 }
 
+.prototype-label {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  font-weight: 700;
+}
+
 .intro,
 .workspace,
 .principles,
@@ -493,9 +500,7 @@ footer p {
     padding-inline: 18px;
   }
 
-  .prototype-label {
-    display: none;
-  }
+  .prototype-label { display: inline-flex; padding: 5px 8px; font-size: .6rem; }
 
   .intro,
   .workspace,

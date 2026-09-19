@@ -395,6 +395,7 @@ body.visualisation-focus { background: var(--viz-paper, #fffaf4); }
 .focus-identity strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .focus-identity small { color: var(--viz-muted, #607084); font-size: .66rem; }
 .focus-identity strong { color: var(--viz-ink, #10243b); font-size: .95rem; }
+.focus-development-label { margin-top: 4px; padding: 3px 7px; border: 1px solid color-mix(in srgb, var(--viz-orange, #c83f00) 40%, var(--viz-line, #e7d7c4)); border-radius: 999px; color: var(--viz-orange, #c83f00); background: color-mix(in srgb, var(--viz-orange, #c83f00) 7%, transparent); font-size: .52rem; font-weight: 700; letter-spacing: .04em; line-height: 1; text-transform: uppercase; }
 
 #close-visualisation-focus {
   display: flex;
