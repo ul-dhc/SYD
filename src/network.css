@@ -39,15 +39,14 @@
 .syd-network-toolbar-tools,
 .syd-network-view-options {
   display: flex;
-  flex: none;
+  min-width: 0;
   align-items: flex-end;
-  flex-wrap: nowrap;
   gap: 8px;
 }
-.syd-network-toolbar-tools { width: 100%; justify-content: space-between; }
+.syd-network-toolbar-tools { width: 100%; flex-wrap: wrap; justify-content: space-between; }
 .syd-network-legend { margin-left: auto; }
 
-.syd-network-view-options { gap: 6px; }
+.syd-network-view-options { max-width: 100%; flex: 1 1 auto; flex-wrap: wrap; gap: 6px; }
 .syd-bipartite-options { display: flex; align-items: flex-end; gap: 6px; }
 .syd-bipartite-options[hidden] { display: none; }
 .syd-network-select { display: grid; gap: 3px; color: var(--muted-foreground); font-size: .5625rem; font-weight: 600; }
@@ -251,7 +250,7 @@
 .syd-network-inspector strong { color: var(--foreground); font-size: .625rem; font-weight: 500; white-space: nowrap; }
 .syd-network-inspector span { min-width: 0; }
 
-@container (max-width: 900px) {
+@container (max-width: 1400px) {
   .syd-network-toolbar-tools { align-items: flex-end; flex-wrap: wrap; }
   .syd-network-view-options { width: 100%; flex-wrap: wrap; }
   .syd-network-tools { margin-left: auto; }
