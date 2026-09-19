@@ -4,6 +4,7 @@ const VALID_VALUES = {
   layout: new Set(["force", "hierarchical", "bipartite"]),
   palette: new Set(["archive", "neon", "autumn", "pastel", "vivid"]),
   theme: new Set(["light", "dark"]),
+  nodeShapeMode: new Set(["distinct", "circles"]),
   style: new Set(["standard", "pencil"]),
   animation: new Set(["none", "rain", "echo", "wave"]),
   labelMode: new Set(["active", "all", "none"]),
@@ -22,6 +23,7 @@ export function createVisualizationState(initial = {}) {
     view: "network",
     palette: "archive",
     theme: "light",
+    nodeShapeMode: "distinct",
     style: "standard",
     animation: "none",
     motionFrozen: false,
@@ -106,6 +108,7 @@ export function visualizationPreferences(state) {
   return {
     palette: state.palette,
     theme: state.theme,
+    nodeShapeMode: state.nodeShapeMode,
     style: state.style,
     animation: state.animation,
     labelMode: state.labelMode,

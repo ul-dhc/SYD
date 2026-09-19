@@ -1,5 +1,5 @@
 import { createBipartiteGraph, createMultilayerGraph, recordIdsForSelection } from "./visualization-data.js?v=10";
-import { NETWORK_COLOR_KEYS, VISUALIZATION_PALETTES, visualizationPalette } from "./visualization-palettes.js?v=1";
+import { visualizationPalette } from "./visualization-palettes.js?v=1";
 
 const WIDTH = 900;
 const HEIGHT = 570;
@@ -32,9 +32,6 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
   const inspector = root.querySelector(".syd-network-inspector");
   const status = root.querySelector(".syd-network-status");
   const layoutSelect = root.querySelector("[data-network-layout]");
-  const themeSelect = root.querySelector("[data-network-theme]");
-  const styleSelect = root.querySelector("[data-network-style]");
-  const animationSelect = root.querySelector("[data-network-animation]");
   const leftRoleSelect = root.querySelector("[data-network-left-role]");
   const rightRoleSelect = root.querySelector("[data-network-right-role]");
 
@@ -62,24 +59,13 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
       resetViewportAndPositions();
       rebuildGraph(true);
     }
-    if (event.target.matches("[data-network-theme]")) sharedState.theme = event.target.value;
-    if (event.target.matches("[data-network-style]")) sharedState.style = event.target.value;
-    if (event.target.matches("[data-network-animation]")) sharedState.animation = event.target.value;
     commitState();
     render();
   });
 
   root.addEventListener("click", (event) => {
-    const paletteButton = event.target.closest(".syd-palette[data-palette]");
     const roleButton = event.target.closest("[data-network-role]");
     const actionButton = event.target.closest("[data-network-action]");
-    const node = event.target.closest("[data-node-id]");
-    if (paletteButton) {
-      sharedState.palette = paletteButton.dataset.palette;
-      commitState();
-      render();
-      return;
-    }
     if (roleButton) {
       toggleRole(roleButton.dataset.networkRole);
       return;
@@ -88,7 +74,6 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
       runAction(actionButton.dataset.networkAction);
       return;
     }
-    if (node && !state.drag?.moved) selectNode(node.dataset.nodeId, event.shiftKey);
   });
 
   root.addEventListener("keydown", (event) => {
@@ -120,7 +105,7 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
         strengths.set(neighborId, .16 + Math.sqrt(edge.weight / maxWeight) * .18);
       });
       positions.forEach((position, id) => sharedState.manualPositions.set(id, { ...position }));
-      state.drag = { type: "node", id: graphNode.id, start: graphPoint(displayPoint), positions, strengths, moved: false };
+      state.drag = { type: "node", id: graphNode.id, start: graphPoint(displayPoint), positions, strengths, additive: event.shiftKey, moved: false };
     } else state.drag = { type: "pan", start: displayPoint, origin: { ...sharedState.pan }, moved: false };
     svg.setPointerCapture(event.pointerId);
     svg.classList.add("is-dragging");
@@ -153,7 +138,7 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
   });
 
   svg.addEventListener("pointerup", finishDrag);
-  svg.addEventListener("pointercancel", finishDrag);
+  svg.addEventListener("pointercancel", cancelDrag);
   svg.addEventListener("wheel", (event) => {
     event.preventDefault();
     const point = svgPoint(event);
@@ -207,11 +192,14 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
   function finishDrag(event) {
     if (!state.drag) return;
     const interaction = state.drag;
-    const wasMoved = state.drag.moved;
-    state.drag = wasMoved ? { moved: true } : null;
+    const wasMoved = interaction.moved;
+    state.drag = null;
     svg.classList.remove("is-dragging");
     if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
-    if (wasMoved) setTimeout(() => { state.drag = null; }, 0);
+    if (!wasMoved && interaction.type === "node") {
+      selectNode(interaction.id, interaction.additive);
+      return;
+    }
     if (!wasMoved && interaction.type === "pan" && sharedState.selectedNodeIds.length) {
       sharedState.selectedNodeIds = [];
       commitState();
@@ -219,6 +207,12 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
       return;
     }
     commitState();
+  }
+
+  function cancelDrag(event) {
+    state.drag = null;
+    svg.classList.remove("is-dragging");
+    if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
   }
 
   function runAction(action) {
@@ -312,12 +306,10 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
   function render() {
     root.dataset.palette = sharedState.palette;
     root.dataset.theme = sharedState.theme;
+    root.dataset.nodeShape = sharedState.nodeShapeMode;
     root.dataset.style = sharedState.style;
     root.dataset.animation = sharedState.animation;
     layoutSelect.value = sharedState.layout;
-    themeSelect.value = sharedState.theme;
-    styleSelect.value = sharedState.style;
-    animationSelect.value = sharedState.animation;
     leftRoleSelect.value = sharedState.bipartiteRoleIds[0] || "";
     rightRoleSelect.value = sharedState.bipartiteRoleIds[1] || "";
     root.querySelector(".syd-bipartite-options").hidden = sharedState.layout !== "bipartite";
@@ -434,8 +426,9 @@ export function renderInteractiveNetwork(container, data, sharedState, onStateCh
     const showLabel = sharedState.labelMode === "all" || (sharedState.labelMode === "active" && selected.size > 0 && active);
     const emphasis = selected.size ? (active ? "is-active" : "is-dimmed") : "is-ambient";
     const placement = labelPlacement(node, radius, state.graph.nodes);
-    const shape = nodeShape(node.type, radius, "node-shape");
-    const outline = sharedState.style === "pencil" ? nodeShape(node.type, radius, "pencil-node-outline") : "";
+    const renderedType = sharedState.nodeShapeMode === "circles" ? "person" : node.type;
+    const shape = nodeShape(renderedType, radius, "node-shape");
+    const outline = sharedState.style === "pencil" ? nodeShape(renderedType, radius, "pencil-node-outline") : "";
     return `<g class="graph-node ${node.type}${isSelected ? " is-selected" : ""} ${emphasis}" data-node-id="${escapeHtml(node.id)}" transform="translate(${node.x} ${node.y})" tabindex="0" role="button" aria-pressed="${isSelected}" aria-label="${escapeHtml(`${node.label}: ${node.degree} saites`)}" style="--wave-delay:${-(node.x / WIDTH) * 4.8}s">${shape}${outline}${showLabel ? `<text x="${placement.x}" y="${placement.y}" text-anchor="${placement.anchor}"${placement.rotation ? ` transform="rotate(${placement.rotation} ${placement.x} ${placement.y})"` : ""}>${escapeHtml(shorten(node.label))}</text>` : ""}<title>${escapeHtml(`${node.label}: ${node.degree} saites`)}</title></g>`;
   }
 
@@ -618,8 +611,7 @@ function shellMarkup(data, state) {
   const roles = data.roleIds.map((id) => data.model.roleById.get(id)).filter(Boolean);
   const options = roles.map((role) => `<option value="${escapeHtml(role.id)}">${escapeHtml(role.label)}</option>`).join("");
   const roleButtons = roles.map((role) => `<button type="button" class="syd-layer-chip" data-network-role="${escapeHtml(role.id)}" aria-pressed="${state.visibleRoleIds.has(role.id)}"><i class="node-swatch ${role.paletteSlot}"></i>${escapeHtml(role.label)}</button>`).join("");
-  const palettes = Object.entries(VISUALIZATION_PALETTES).map(([id, palette]) => `<button class="syd-palette" type="button" data-palette="${id}" aria-label="Palete ${palette.label}" title="${palette.label}"><span>${NETWORK_COLOR_KEYS.map((key) => `<i style="--swatch:${palette.colors[key]}"></i>`).join("")}</span></button>`).join("");
-  return `<section class="syd-network" data-palette="${state.palette}" data-theme="${state.theme}" data-style="${state.style}" data-animation="${state.animation}"><div class="syd-network-toolbar network-toolbar network-toolbar-secondary" aria-label="Tīkla iestatījumi"><div class="syd-network-toolbar-tools toolbar-tools"><div class="syd-network-view-options network-view-options"><label class="syd-network-select network-select"><span>Izkārtojums</span><select data-network-layout><option value="force">Brīvais</option><option value="hierarchical">Hierarhisks</option><option value="bipartite">Divdaļīgs</option></select></label><div class="syd-bipartite-options" hidden><label class="syd-network-select network-select"><span>Kreisā puse</span><select data-network-left-role>${options}</select></label><label class="syd-network-select network-select"><span>Labā puse</span><select data-network-right-role>${options}</select></label></div><label class="syd-network-select network-select"><span>Fons</span><select data-network-theme><option value="light">Gaišs</option><option value="dark">Tumšs</option></select></label><label class="syd-network-select network-select"><span>Stils</span><select data-network-style><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label><label class="syd-network-select network-select"><span>Kustība</span><select data-network-animation><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label><fieldset class="syd-network-palettes"><legend>Palete</legend><div>${palettes}</div></fieldset></div><div class="syd-network-tools network-controls" aria-label="Tīkla darbības"><button type="button" data-network-action="motion" aria-label="Apturēt kustību" title="Apturēt kustību"><i data-lucide="pause"></i></button><button type="button" data-network-action="labels" class="label-mode-button" aria-label="Mainīt nosaukumu režīmu" title="Mainīt nosaukumu režīmu"><i data-lucide="eye"></i></button><button type="button" data-network-action="label-size" class="graph-text-size-button" aria-label="Mainīt nosaukumu izmēru" title="Mainīt nosaukumu izmēru">A+</button><button type="button" data-network-action="scatter" class="node-scatter-button" aria-label="Izkliedēt mezglus" title="Izkliedēt mezglus"><i data-lucide="scatter-chart"></i></button><button type="button" data-network-action="zoom-out" aria-label="Attālināt" title="Attālināt"><i data-lucide="zoom-out"></i></button><output aria-label="Mērogs">100%</output><button type="button" data-network-action="zoom-in" aria-label="Pietuvināt" title="Pietuvināt"><i data-lucide="zoom-in"></i></button><button type="button" data-network-action="reset" aria-label="Atjaunot novietojumu" title="Atjaunot novietojumu"><i data-lucide="rotate-ccw"></i></button></div></div><fieldset class="syd-network-layers"><legend>Datu slāņi</legend><div>${roleButtons}</div></fieldset><div class="syd-network-legend legend" aria-label="Leģenda"></div></div><div class="syd-network-canvas network-stage"><svg class="syd-network-svg network-canvas" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="Daudzslāņu saikņu tīkls"><rect class="network-hit-area" width="${WIDTH}" height="${HEIGHT}"></rect><g class="syd-network-graph"></g></svg></div><div class="syd-network-inspector network-hint" aria-live="polite"></div><p class="visually-hidden syd-network-status" aria-live="polite"></p></section>`;
+  return `<section class="syd-network" data-palette="${state.palette}" data-theme="${state.theme}" data-node-shape="${state.nodeShapeMode}" data-style="${state.style}" data-animation="${state.animation}"><div class="syd-network-toolbar network-toolbar network-toolbar-secondary" aria-label="Tīkla iestatījumi"><div class="syd-network-toolbar-tools toolbar-tools"><div class="syd-network-view-options network-view-options"><label class="syd-network-select network-select"><span>Izkārtojums</span><select data-network-layout><option value="force">Brīvais</option><option value="hierarchical">Hierarhisks</option><option value="bipartite">Divdaļīgs</option></select></label><div class="syd-bipartite-options" hidden><label class="syd-network-select network-select"><span>Kreisā puse</span><select data-network-left-role>${options}</select></label><label class="syd-network-select network-select"><span>Labā puse</span><select data-network-right-role>${options}</select></label></div></div><div class="syd-network-tools network-controls" aria-label="Tīkla darbības"><button type="button" data-network-action="motion" aria-label="Apturēt kustību" title="Apturēt kustību"><i data-lucide="pause"></i></button><button type="button" data-network-action="labels" class="label-mode-button" aria-label="Mainīt nosaukumu režīmu" title="Mainīt nosaukumu režīmu"><i data-lucide="eye"></i></button><button type="button" data-network-action="label-size" class="graph-text-size-button" aria-label="Mainīt nosaukumu izmēru" title="Mainīt nosaukumu izmēru">A+</button><button type="button" data-network-action="scatter" class="node-scatter-button" aria-label="Izkliedēt mezglus" title="Izkliedēt mezglus"><i data-lucide="scatter-chart"></i></button><button type="button" data-network-action="zoom-out" aria-label="Attālināt" title="Attālināt"><i data-lucide="zoom-out"></i></button><output aria-label="Mērogs">100%</output><button type="button" data-network-action="zoom-in" aria-label="Pietuvināt" title="Pietuvināt"><i data-lucide="zoom-in"></i></button><button type="button" data-network-action="reset" aria-label="Atjaunot novietojumu" title="Atjaunot novietojumu"><i data-lucide="rotate-ccw"></i></button></div></div><fieldset class="syd-network-layers"><legend>Datu slāņi</legend><div>${roleButtons}</div></fieldset><div class="syd-network-legend legend" aria-label="Leģenda"></div></div><div class="syd-network-canvas network-stage"><svg class="syd-network-svg network-canvas" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="Daudzslāņu saikņu tīkls"><rect class="network-hit-area" width="${WIDTH}" height="${HEIGHT}"></rect><g class="syd-network-graph"></g></svg></div><div class="syd-network-inspector network-hint" aria-live="polite"></div><p class="visually-hidden syd-network-status" aria-live="polite"></p></section>`;
 }
 
 function definitionsMarkup() {

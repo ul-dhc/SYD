@@ -24,7 +24,7 @@
     <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
     <link rel="stylesheet" href="./src/styles.css" />
     <link rel="stylesheet" href="./src/workspace.css?v=10" />
-    <link rel="stylesheet" href="./src/visualization.css?v=7" />
+    <link rel="stylesheet" href="./src/visualization.css?v=9" />
   </head>
   <body>
     <a class="skip-link" href="#workspace">Pāriet uz darba vidi</a>
@@ -204,11 +204,31 @@
                 <small id="focus-dataset-name">Datu kopa</small>
                 <strong id="focus-visualisation-name">Vizualizācija</strong>
               </div>
-              <button id="close-visualisation-focus" type="button" aria-label="Atgriezties pie datiem" title="Atgriezties pie datiem">
-                <i data-lucide="arrow-left" aria-hidden="true"></i>
-                <span>Atgriezties pie datiem</span>
-              </button>
+              <div class="focus-actions">
+                <button type="button" data-open-chart-settings aria-label="Iestatījumi" title="Iestatījumi" aria-controls="chart-settings-panel" aria-expanded="false"><i data-lucide="settings-2" aria-hidden="true"></i></button>
+                <button id="close-visualisation-focus" type="button" aria-label="Atgriezties pie datiem" title="Atgriezties pie datiem">
+                  <i data-lucide="arrow-left" aria-hidden="true"></i>
+                  <span>Atgriezties pie datiem</span>
+                </button>
+              </div>
             </header>
+            <button class="settings-scrim" id="chart-settings-scrim" type="button" aria-label="Aizvērt iestatījumus" hidden></button>
+            <section class="settings-panel" id="chart-settings-panel" role="dialog" aria-modal="false" aria-labelledby="chart-settings-title" hidden>
+              <div class="settings-heading"><div><span>Vizualizācija</span><h2 id="chart-settings-title">Iestatījumi</h2></div><button id="close-chart-settings" type="button" aria-label="Aizvērt iestatījumus" title="Aizvērt iestatījumus"><i data-lucide="x" aria-hidden="true"></i></button></div>
+              <fieldset class="settings-section"><legend>Krāsu palete</legend><div class="palette-options">
+                <button class="palette-option" type="button" data-chart-palette="archive"><span class="palette-swatches" aria-hidden="true"></span><span><strong>Arhīvs</strong><small>Archive</small></span><i data-lucide="check" aria-hidden="true"></i></button>
+                <button class="palette-option" type="button" data-chart-palette="neon"><span class="palette-swatches" aria-hidden="true"></span><span><strong>Neons</strong><small>Neon</small></span><i data-lucide="check" aria-hidden="true"></i></button>
+                <button class="palette-option" type="button" data-chart-palette="autumn"><span class="palette-swatches" aria-hidden="true"></span><span><strong>Dzintars</strong><small>Amber</small></span><i data-lucide="check" aria-hidden="true"></i></button>
+                <button class="palette-option" type="button" data-chart-palette="pastel"><span class="palette-swatches" aria-hidden="true"></span><span><strong>Pastelis</strong><small>Pastel</small></span><i data-lucide="check" aria-hidden="true"></i></button>
+                <button class="palette-option" type="button" data-chart-palette="vivid"><span class="palette-swatches" aria-hidden="true"></span><span><strong>Košums</strong><small>Vivid</small></span><i data-lucide="check" aria-hidden="true"></i></button>
+              </div></fieldset>
+              <fieldset class="settings-section settings-fields"><legend>Attēlojums</legend>
+                <label><span>Fons</span><select id="chart-theme-select"><option value="light">Gaišs</option><option value="dark">Tumšs</option></select></label>
+                <label><span>Mezglu forma</span><select id="chart-node-shape-select"><option value="distinct">Pēc kategorijas</option><option value="circles">Visi apļi</option></select></label>
+                <label><span>Stils</span><select id="chart-style-select"><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label>
+                <label><span>Kustība</span><select id="chart-animation-select"><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label>
+              </fieldset>
+            </section>
             <div class="section-heading">
               <div><span class="section-number">05</span><div><p class="eyebrow">Izvēlētā vizualizācija</p><h3 id="visualisation-title">Kategoriju biežuma vizualizācija</h3></div></div>
               <p id="method-note">Piemērots, lai salīdzinātu vienas kolonnas vērtību biežumu.</p>
@@ -257,19 +277,7 @@
                   </button>
                 </div>
                 <div class="visual-controls" id="visual-controls">
-                  <div class="chart-settings" id="chart-settings">
-                    <label><span>Fons</span><select id="chart-theme-select"><option value="light">Gaišs</option><option value="dark">Tumšs</option></select></label>
-                    <label><span>Stils</span><select id="chart-style-select"><option value="standard">Standarta</option><option value="pencil">Zīmulis</option></select></label>
-                    <label><span>Kustība</span><select id="chart-animation-select"><option value="none">Nav</option><option value="rain">Lietus</option><option value="echo">Atbalss</option><option value="wave">Vilnis</option></select></label>
-                    <fieldset class="chart-palette-options">
-                      <legend>Palete</legend>
-                      <button type="button" data-chart-palette="archive" aria-label="Arhīvs" title="Arhīvs"><span aria-hidden="true"></span></button>
-                      <button type="button" data-chart-palette="neon" aria-label="Neons" title="Neons"><span aria-hidden="true"></span></button>
-                      <button type="button" data-chart-palette="autumn" aria-label="Dzintars" title="Dzintars"><span aria-hidden="true"></span></button>
-                      <button type="button" data-chart-palette="pastel" aria-label="Pastelis" title="Pastelis"><span aria-hidden="true"></span></button>
-                      <button type="button" data-chart-palette="vivid" aria-label="Košums" title="Košums"><span aria-hidden="true"></span></button>
-                    </fieldset>
-                  </div>
+                  <button class="visual-settings-button" type="button" data-open-chart-settings aria-controls="chart-settings-panel" aria-expanded="false"><i data-lucide="settings-2" aria-hidden="true"></i><span>Iestatījumi</span></button>
                   <label id="field-control"><span>Izmantotā kolonna</span><select id="field-select"></select></label>
                   <label id="second-field-control" hidden><span>Salīdzināmā kolonna</span><select id="second-field-select"></select></label>
                   <label id="limit-control"><span>Parādīt</span><select id="limit-select"><option value="5">5 biežākās vērtības</option><option value="10" selected>10 biežākās vērtības</option><option value="20">20 biežākās vērtības</option></select></label>
@@ -324,6 +332,6 @@
 
     <script src="./src/vendor/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/lucide@0.503.0/dist/umd/lucide.min.js"></script>
-    <script type="module" src="./src/app.js?v=19"></script>
+    <script type="module" src="./src/app.js?v=21"></script>
   </body>
 </html>

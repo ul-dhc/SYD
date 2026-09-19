@@ -1,5 +1,5 @@
 import { SYD_LIBRARY } from "./library.js";
-import { renderInteractiveNetwork } from "./network.js?v=16";
+import { renderInteractiveNetwork } from "./network.js?v=18";
 import { CHART_SWATCH_KEYS, visualizationPalette } from "./visualization-palettes.js?v=1";
 import {
   createBipartiteGraph,
@@ -19,7 +19,7 @@ import {
   setVisualizationOption,
   toggleNodeSelection,
   visualizationPreferences,
-} from "./visualization-state.js?v=10";
+} from "./visualization-state.js?v=12";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_ROWS = 10_000;
@@ -105,8 +105,12 @@ const elements = {
   workspaceViewSwitcher: document.querySelector("#workspace-view-switcher"),
   workspaceViewButtons: [...document.querySelectorAll("[data-workspace-view]")],
   explorerShell: document.querySelector(".explorer-shell"),
-  chartSettings: document.querySelector("#chart-settings"),
+  chartSettingsPanel: document.querySelector("#chart-settings-panel"),
+  chartSettingsScrim: document.querySelector("#chart-settings-scrim"),
+  openChartSettings: [...document.querySelectorAll("[data-open-chart-settings]")],
+  closeChartSettings: document.querySelector("#close-chart-settings"),
   chartTheme: document.querySelector("#chart-theme-select"),
+  chartNodeShape: document.querySelector("#chart-node-shape-select"),
   chartStyle: document.querySelector("#chart-style-select"),
   chartAnimation: document.querySelector("#chart-animation-select"),
   chartPaletteButtons: [...document.querySelectorAll("[data-chart-palette]")],
@@ -129,6 +133,9 @@ syncWorkspaceViewport();
 compactWorkspaceMedia.addEventListener?.("change", syncWorkspaceViewport);
 applyChartPreferences();
 window.addEventListener("hashchange", syncVisualisationFocus);
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !elements.chartSettingsPanel.hidden) closeChartSettings();
+});
 
 elements.demoButton?.addEventListener("click", loadDemo);
 elements.fileInput?.addEventListener("change", loadFile);
@@ -178,6 +185,12 @@ elements.chartStyle?.addEventListener("change", () => {
   applyChartPreferences();
   renderVisualisation();
 });
+elements.chartNodeShape?.addEventListener("change", () => {
+  setVisualizationOption(state.visualization, "nodeShapeMode", elements.chartNodeShape.value);
+  saveChartPreferences();
+  applyChartPreferences();
+  renderVisualisation();
+});
 elements.chartTheme?.addEventListener("change", () => {
   setVisualizationOption(state.visualization, "theme", elements.chartTheme.value);
   saveChartPreferences();
@@ -196,6 +209,9 @@ elements.chartPaletteButtons.forEach((button) => button.addEventListener("click"
   applyChartPreferences();
   renderVisualisation();
 }));
+elements.openChartSettings.forEach((button) => button.addEventListener("click", openChartSettings));
+elements.closeChartSettings?.addEventListener("click", closeChartSettings);
+elements.chartSettingsScrim?.addEventListener("click", closeChartSettings);
 elements.openVisualisationFocus?.addEventListener("click", openVisualisationFocus);
 elements.closeVisualisationFocus?.addEventListener("click", closeVisualisationFocus);
 elements.visualOutput?.addEventListener("click", (event) => {
@@ -752,19 +768,34 @@ function applyChartPreferences() {
   Object.entries(palette.colors).forEach(([key, value]) => elements.explorerShell.style.setProperty(`--viz-${key}`, value));
   elements.explorerShell.dataset.vizPalette = state.visualization.palette;
   elements.explorerShell.dataset.vizTheme = state.visualization.theme;
+  elements.explorerShell.dataset.nodeShape = state.visualization.nodeShapeMode;
   elements.explorerShell.dataset.vizStyle = state.visualization.style;
   elements.explorerShell.dataset.vizAnimation = state.visualization.animation;
   document.body.dataset.sydVisualTheme = state.visualization.theme;
   elements.chartTheme.value = state.visualization.theme;
+  elements.chartNodeShape.value = state.visualization.nodeShapeMode;
   elements.chartStyle.value = state.visualization.style;
   elements.chartAnimation.value = state.visualization.animation;
   elements.chartPaletteButtons.forEach((button) => {
     const active = button.dataset.chartPalette === state.visualization.palette;
     const option = visualizationPalette(button.dataset.chartPalette);
-    button.querySelector("span").innerHTML = CHART_SWATCH_KEYS.map((key) => `<i style="--swatch:${option.colors[key]}"></i>`).join("");
+    button.querySelector(".palette-swatches").innerHTML = CHART_SWATCH_KEYS.map((key) => `<i style="--swatch:${option.colors[key]}"></i>`).join("");
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
   });
+}
+
+function openChartSettings() {
+  elements.chartSettingsPanel.hidden = false;
+  elements.chartSettingsScrim.hidden = false;
+  elements.openChartSettings.forEach((button) => button.setAttribute("aria-expanded", "true"));
+  elements.closeChartSettings?.focus();
+}
+
+function closeChartSettings() {
+  elements.chartSettingsPanel.hidden = true;
+  elements.chartSettingsScrim.hidden = true;
+  elements.openChartSettings.forEach((button) => button.setAttribute("aria-expanded", "false"));
 }
 
 function configureRecommendations() {
@@ -865,6 +896,7 @@ function openVisualisationFocus() {
 
 function closeVisualisationFocus() {
   const returnScroll = state.focusReturnScroll;
+  closeChartSettings();
   history.pushState(null, "", "#workspace");
   syncVisualisationFocus();
   requestAnimationFrame(() => window.scrollTo({ top: returnScroll, behavior: "auto" }));
@@ -890,7 +922,6 @@ function renderVisualisation() {
   elements.interpretation.textContent = effectiveRenderer === "overview"
     ? "Vizualizācijas rāda datu struktūru, biežumu un kopparādīšanos. Šie rādītāji paši par sevi neparāda parādību nozīmīgumu vai cēloņsakarību."
     : config.interpretation;
-  elements.chartSettings.hidden = ["network", "records"].includes(effectiveRenderer);
   elements.fieldControl.hidden = ["records", "overview", "network"].includes(effectiveRenderer);
   elements.secondFieldControl.hidden = effectiveRenderer !== "comparison";
   elements.limitControl.hidden = ["records", "overview", "comparison", "network"].includes(effectiveRenderer);
